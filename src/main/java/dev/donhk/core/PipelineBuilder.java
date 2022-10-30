@@ -40,15 +40,16 @@ public class PipelineBuilder {
                 pipeline.apply("read dict", Create.of(dicLines))
                         .apply("convert", ConvertToDict.of());
 
-        dictionary.apply(PrintPCollection.with());
+        //dictionary.apply(PrintPCollection.with());
 
-        PCollection<KV<String, Long>> words =
+        PCollection<WordRecord> words =
                 inputText.apply("convert-lines-to-words", Tokenize.of())
                         .apply("transform-strings", TransformString.upper())
                         .apply("filter strings", FilterWords.with(".*DEA.*"))
                         .apply("count words", Count.perElement())
-                        .apply("get top x", TopKElements.of(7));
-        //words.apply(PrintPCollection.with());
+                        .apply("get top x", TopKElements.of(7))
+                        .apply("join", JoinSets.of(dictionary));
+        words.apply(PrintPCollection.with());
         pipeline.run().waitUntilFinish();
 
     }
