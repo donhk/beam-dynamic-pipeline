@@ -45,15 +45,22 @@ public class AbstractPipeline implements Callable<String> {
                 pipeline.apply("read dict", Create.of(dicLines))
                         .apply("convert", ConvertToDict.of());
 
-        final PCollection<String> tokens =
-                mainStream.apply("convert-lines-to-words", Tokenize.of())
-                        .apply("transform-strings", TransformString.upper());
-
-        final PCollection<String> transformed;
-        if (dag.getTransform().equalsIgnoreCase("upper")) {
-            transformed = tokens.apply("transform-strings-upper", TransformString.upper());
-        } else {
-            transformed = tokens.apply("transform-strings-lower", TransformString.lower());
+        PCollection<String> transformed = mainStream.apply("convert-lines-to-words", Tokenize.of());
+        for (String transform : dag.getTransforms()) {
+            if (transform.equalsIgnoreCase("upper")) {
+                LOG.info("transform-strings-upper");
+                transformed = transformed.apply("transform-strings-upper", TransformString.upper());
+                continue;
+            }
+            if (transform.equalsIgnoreCase("lower")) {
+                LOG.info("transform-strings-lower");
+                transformed = transformed.apply("transform-strings-lower", TransformString.lower());
+                continue;
+            }
+            if (transform.contains("rep")) {
+                LOG.info("transform-rep-{}", transform);
+                transformed = transformed.apply("transform-rep-" + transform, ReplaceString.with(transform));
+            }
         }
 
         final PCollection<String> filtered =
@@ -62,7 +69,7 @@ public class AbstractPipeline implements Callable<String> {
         final PCollection<KV<String, Long>> top =
                 filtered.apply("count words", Count.perElement())
                         .apply("get top x", TopKElements.of(dag.getTop()));
-
+        //top.apply(PrintPCollection.with());
         final PCollection<WordRecord> words;
         LOG.info(dag.getJoin().name());
         switch (dag.getJoin()) {
@@ -78,7 +85,7 @@ public class AbstractPipeline implements Callable<String> {
                 break;
         }
 
-        words.apply("print", PrintPCollection.with(dag.getName()));
+        words.apply(PrintPCollection.with(dag.getName()));
         LOG.info("starting pipeline " + dag.getName());
 
         pipeline.run().waitUntilFinish();

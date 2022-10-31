@@ -1,8 +1,12 @@
 # transform strings
-transforms: upper
+transforms:
+  - upper
+  - rep,A,I
+  - rep,D,O
+  - rep,T,U
 # string filters
-filters: .*DEA.*
+filters: .*I.*
 # top words
-top: 7
+top: 10
 # join type
 join: inner

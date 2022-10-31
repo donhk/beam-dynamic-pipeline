@@ -3,10 +3,11 @@ package dev.donhk.utilities;
 import dev.donhk.transform.JoinType;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Dag implements Serializable {
     private String name;
-    private String transform;
+    private List<String> transforms;
     private String filter;
     private int top;
     private JoinType join;
@@ -14,12 +15,12 @@ public class Dag implements Serializable {
     public Dag() {
     }
 
-    public String getTransform() {
-        return transform;
+    public List<String> getTransforms() {
+        return transforms;
     }
 
-    public void setTransform(String transform) {
-        this.transform = transform;
+    public void setTransforms(List<String> transforms) {
+        this.transforms = transforms;
     }
 
     public String getFilter() {
@@ -49,7 +50,7 @@ public class Dag implements Serializable {
     @Override
     public String toString() {
         return "Dag{" +
-                "transform='" + transform + '\'' +
+                "transforms='" + transforms + '\'' +
                 ", filter='" + filter + '\'' +
                 ", top=" + top +
                 ", join=" + join +

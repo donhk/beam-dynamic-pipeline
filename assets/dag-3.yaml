@@ -1,5 +1,6 @@
 # transform strings
-transforms: upper
+transforms:
+  - upper
 # string filters
 filters: .*PAIN.*
 # top words

@@ -1,5 +1,6 @@
 # transform strings
-transforms: lower
+transforms:
+  - lower
 # string filters
 filters: .*eat.*
 # top words

@@ -30,11 +30,12 @@ public class Utils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static List<Dag> getDags() {
         final List<String> files = Arrays.asList(
-                "assets/dag-1.yaml",
-                "assets/dag-2.yaml",
-                "assets/dag-3.yaml"
+                "assets/dag-1.yaml"//,
+                //"assets/dag-2.yaml",
+                //"assets/dag-3.yaml"
         );
         final Yaml yaml = new Yaml();
         final List<Dag> actualDags = new ArrayList<>();
@@ -49,7 +50,7 @@ public class Utils {
 
             final String joinStr = (String) obj.get("join");
 
-            newDag.setTransform((String) obj.get("transforms"));
+            newDag.setTransforms((ArrayList<String>) obj.get("transforms"));
             newDag.setJoin(JoinType.valueOf(joinStr));
             newDag.setFilter((String) obj.get("filters"));
             newDag.setTop((int) obj.get("top"));
