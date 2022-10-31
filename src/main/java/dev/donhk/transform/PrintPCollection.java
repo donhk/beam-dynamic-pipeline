@@ -10,13 +10,19 @@ import org.apache.logging.log4j.Logger;
 
 public class PrintPCollection<T> extends PTransform<PCollection<T>, PDone> {
 
+    private final String prefix;
     private static final Logger LOG = LogManager.getLogger(PrintPCollection.class);
 
     public static <T> PrintPCollection<T> with() {
-        return new PrintPCollection<>();
+        return new PrintPCollection<>(null);
     }
 
-    private PrintPCollection() {
+    public static <T> PrintPCollection<T> with(String prefix) {
+        return new PrintPCollection<>(prefix);
+    }
+
+    private PrintPCollection(String prefix) {
+        this.prefix = prefix;
     }
 
     @Override
@@ -25,10 +31,14 @@ public class PrintPCollection<T> extends PTransform<PCollection<T>, PDone> {
         return PDone.in(input.getPipeline());
     }
 
-    private static class PrintElement<T> extends DoFn<T, Void> {
+    private class PrintElement<A> extends DoFn<A, Void> {
         @ProcessElement
-        public void process(@Element T elem) {
-            LOG.info(elem);
+        public void process(@Element A elem) {
+            if (prefix == null) {
+                LOG.info(elem);
+            } else {
+                LOG.info("[{}] {}", prefix, elem);
+            }
         }
     }
 }

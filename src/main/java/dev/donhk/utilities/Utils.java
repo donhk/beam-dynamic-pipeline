@@ -53,6 +53,7 @@ public class Utils {
             newDag.setJoin(JoinType.valueOf(joinStr));
             newDag.setFilter((String) obj.get("filters"));
             newDag.setTop((int) obj.get("top"));
+            newDag.setName(file);
             actualDags.add(newDag);
         }
         return actualDags;

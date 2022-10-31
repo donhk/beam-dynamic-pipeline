@@ -5,6 +5,7 @@ import dev.donhk.transform.JoinType;
 import java.io.Serializable;
 
 public class Dag implements Serializable {
+    private String name;
     private String transform;
     private String filter;
     private int top;
@@ -53,5 +54,13 @@ public class Dag implements Serializable {
                 ", top=" + top +
                 ", join=" + join +
                 '}';
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
