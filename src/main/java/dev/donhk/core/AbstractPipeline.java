@@ -4,6 +4,7 @@ import dev.donhk.transform.*;
 import dev.donhk.utilities.ConvertToDict;
 import dev.donhk.utilities.Dag;
 import dev.donhk.utilities.WordRecord;
+import org.apache.beam.repackaged.direct_java.runners.core.construction.renderer.PipelineDotRenderer;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.transforms.Count;
 import org.apache.beam.sdk.transforms.Create;
@@ -85,7 +86,9 @@ public class AbstractPipeline implements Callable<String> {
         }
 
         words.apply(PrintPCollection.with(dag.getName()));
-        LOG.info("starting pipeline " + dag.getName());
+        String dotString = PipelineDotRenderer.toDotString(pipeline);
+        LOG.debug("{}", dotString);
+        LOG.info("starting pipeline {}", dag.getName());
 
         pipeline.run().waitUntilFinish();
         return dag.getName();
