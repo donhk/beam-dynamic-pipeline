@@ -1,7 +1,7 @@
 # transform strings
 transforms: upper
 # string filters
-filters: .*STA.*
+filters: .*PAIN.*
 # top words
 top: 10
 # join type

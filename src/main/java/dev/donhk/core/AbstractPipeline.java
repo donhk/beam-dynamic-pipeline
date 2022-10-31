@@ -36,7 +36,7 @@ public class AbstractPipeline implements Callable<String> {
     public String call() {
         // read file -> tokenize -> filter -> count -> get top
         final Pipeline pipeline = Pipeline.create();
-        LOG.info("assembling pipeline " + Thread.currentThread().getId());
+        LOG.info("assembling pipeline " + dag.getName());
 
         final PCollection<String> mainStream =
                 pipeline.apply("read file", Create.of(lines));
@@ -45,11 +45,22 @@ public class AbstractPipeline implements Callable<String> {
                 pipeline.apply("read dict", Create.of(dicLines))
                         .apply("convert", ConvertToDict.of());
 
-        final PCollection<KV<String, Long>> top =
+        final PCollection<String> tokens =
                 mainStream.apply("convert-lines-to-words", Tokenize.of())
-                        .apply("transform-strings", TransformString.upper())
-                        .apply("filter strings", FilterWords.with(dag.getFilter()))
-                        .apply("count words", Count.perElement())
+                        .apply("transform-strings", TransformString.upper());
+
+        final PCollection<String> transformed;
+        if (dag.getTransform().equalsIgnoreCase("upper")) {
+            transformed = tokens.apply("transform-strings-upper", TransformString.upper());
+        } else {
+            transformed = tokens.apply("transform-strings-lower", TransformString.lower());
+        }
+
+        final PCollection<String> filtered =
+                transformed.apply("filter strings", FilterWords.with(dag.getFilter()));
+
+        final PCollection<KV<String, Long>> top =
+                filtered.apply("count words", Count.perElement())
                         .apply("get top x", TopKElements.of(dag.getTop()));
 
         final PCollection<WordRecord> words;
@@ -67,8 +78,9 @@ public class AbstractPipeline implements Callable<String> {
                 break;
         }
 
-        words.apply(PrintPCollection.with(String.valueOf(Thread.currentThread().getId())));
-        LOG.info("starting pipeline " + Thread.currentThread().getId());
+        words.apply("print", PrintPCollection.with(dag.getName()));
+        LOG.info("starting pipeline " + dag.getName());
+
         pipeline.run().waitUntilFinish();
         return dag.getName();
     }
