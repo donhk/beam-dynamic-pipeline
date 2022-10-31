@@ -1,14 +1,17 @@
 package dev.donhk.utilities;
 
 
+import dev.donhk.transform.JoinType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Utils {
 
@@ -25,5 +28,33 @@ public class Utils {
             LOG.error(e.getMessage(), e);
             return Collections.emptyList();
         }
+    }
+
+    public static List<Dag> getDags() {
+        final List<String> files = Arrays.asList(
+                "assets/dag-1.yaml",
+                "assets/dag-2.yaml",
+                "assets/dag-3.yaml"
+        );
+        final Yaml yaml = new Yaml();
+        final List<Dag> actualDags = new ArrayList<>();
+        for (String file : files) {
+            final Map<String, Object> obj;
+            try {
+                obj = yaml.load(new FileReader(file));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            final Dag newDag = new Dag();
+
+            final String joinStr = (String) obj.get("join");
+
+            newDag.setTransform((String) obj.get("transforms"));
+            newDag.setJoin(JoinType.valueOf(joinStr));
+            newDag.setFilter((String) obj.get("filters"));
+            newDag.setTop((int) obj.get("top"));
+            actualDags.add(newDag);
+        }
+        return actualDags;
     }
 }

@@ -1,0 +1,8 @@
+# transform strings
+transforms: lower
+# string filters
+filters: .*eat.*
+# top words
+top: 10
+# join type
+join: none

@@ -20,18 +20,19 @@ public class PipelineBuilder {
     private static final Logger LOG = LogManager.getLogger(PipelineBuilder.class);
     private final String sourceFile;
     private final String dictionary;
-    private final String dag;
 
-    public PipelineBuilder(String sourceFile, String dictionary, String dag) {
+    public PipelineBuilder(String sourceFile, String dictionary) {
         this.sourceFile = sourceFile;
         this.dictionary = dictionary;
-        this.dag = dag;
     }
 
     public void execute() {
         LOG.info("start");
         final List<String> lines = Utils.readFile(sourceFile);
         final List<String> dicLines = Utils.readFile(dictionary);
+        final List<Dag> dags = Utils.getDags();
+        LOG.info(dags);
+
         // read file -> tokenize -> filter -> count -> get top
         final Pipeline pipeline = Pipeline.create();
 
@@ -48,7 +49,7 @@ public class PipelineBuilder {
                         .apply("filter strings", FilterWords.with(".*DEA.*"))
                         .apply("count words", Count.perElement())
                         .apply("get top x", TopKElements.of(7))
-                        .apply("join", JoinSets.of(dictionary));
+                        .apply("join", JoinSets.outerJoin(dictionary));
         words.apply(PrintPCollection.with());
         pipeline.run().waitUntilFinish();
 

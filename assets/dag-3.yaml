@@ -1,0 +1,8 @@
+# transform strings
+transforms: upper
+# string filters
+filters: .*IGH.*
+# top words
+top: 10
+# join type
+join: outer

@@ -1,0 +1,8 @@
+# transform strings
+transforms: upper
+# string filters
+filters: .*DEA.*
+# top words
+top: 7
+# join type
+join: inner
