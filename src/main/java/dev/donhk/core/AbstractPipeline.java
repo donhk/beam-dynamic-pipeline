@@ -48,17 +48,17 @@ public class AbstractPipeline implements Callable<String> {
         PCollection<String> transformed = mainStream.apply("convert-lines-to-words", Tokenize.of());
         for (String transform : dag.getTransforms()) {
             if (transform.equalsIgnoreCase("upper")) {
-                LOG.info("transform-strings-upper");
+                LOG.info("[{}] transform-strings-upper", dag.getName());
                 transformed = transformed.apply("transform-strings-upper", TransformString.upper());
                 continue;
             }
             if (transform.equalsIgnoreCase("lower")) {
-                LOG.info("transform-strings-lower");
+                LOG.info("[{}] transform-strings-lower", dag.getName());
                 transformed = transformed.apply("transform-strings-lower", TransformString.lower());
                 continue;
             }
             if (transform.contains("rep")) {
-                LOG.info("transform-rep-{}", transform);
+                LOG.info("[{}] transform-rep-{}", dag.getName(), transform);
                 transformed = transformed.apply("transform-rep-" + transform, ReplaceString.with(transform));
             }
         }
@@ -67,21 +67,20 @@ public class AbstractPipeline implements Callable<String> {
                 transformed.apply("filter strings", FilterWords.with(dag.getFilter()));
 
         final PCollection<KV<String, Long>> top =
-                filtered.apply("count words", Count.perElement())
-                        .apply("get top x", TopKElements.of(dag.getTop()));
-        //top.apply(PrintPCollection.with());
+                filtered.apply(dag.getName() + " count words", Count.perElement())
+                        .apply(dag.getName() + " get top " + dag.getTop(), TopKElements.of(dag.getTop()));
+
         final PCollection<WordRecord> words;
-        LOG.info(dag.getJoin().name());
         switch (dag.getJoin()) {
             case inner:
-                words = top.apply("join", JoinSets.innerJoin(secondStream));
+                words = top.apply(dag.getName() + " inner join", JoinSets.innerJoin(secondStream));
                 break;
             case outer:
-                words = top.apply("join", JoinSets.outerJoin(secondStream));
+                words = top.apply(dag.getName() + " outer join", JoinSets.outerJoin(secondStream));
                 break;
             case none:
             default:
-                words = top.apply("no-join", JoinSets.none(secondStream));
+                words = top.apply(dag.getName() + "no-join", JoinSets.none(secondStream));
                 break;
         }
 

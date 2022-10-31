@@ -33,9 +33,9 @@ public class Utils {
     @SuppressWarnings("unchecked")
     public static List<Dag> getDags() {
         final List<String> files = Arrays.asList(
-                "assets/dag-1.yaml"//,
-                //"assets/dag-2.yaml",
-                //"assets/dag-3.yaml"
+                "assets/dag-1.yaml",
+                "assets/dag-2.yaml",
+                "assets/dag-3.yaml"
         );
         final Yaml yaml = new Yaml();
         final List<Dag> actualDags = new ArrayList<>();
