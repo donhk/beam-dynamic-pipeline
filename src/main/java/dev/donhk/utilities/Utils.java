@@ -74,8 +74,6 @@ public class Utils {
     public static List<UserTxn> getUserTxnList() {
         final String[] HEADERS = {"id", "first_name", "last_name", "email", "gender", "time", "amount"};
         final List<UserTxn> list = new ArrayList<>();
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         try (Reader in = new FileReader("assets/user_txn_list.csv")) {
             final Iterable<CSVRecord> records = CSVFormat.DEFAULT.builder()
                     .setHeader(HEADERS)
@@ -108,11 +106,56 @@ public class Utils {
 
     public static List<Comment> getCommentList() {
         final String[] HEADERS = {"id", "username", "comment", "background"};
-        return null;
+        final List<Comment> list = new ArrayList<>();
+        try (Reader in = new FileReader("assets/comments.csv")) {
+            final Iterable<CSVRecord> records = CSVFormat.DEFAULT.builder()
+                    .setHeader(HEADERS)
+                    .setSkipHeaderRecord(true)
+                    .build()
+                    .parse(in);
+            for (CSVRecord record : records) {
+                final long id = Long.parseLong(record.get("id"));
+                list.add(new Comment(
+                        id,
+                        record.get("username"),
+                        record.get("comment"),
+                        record.get("background")
+                ));
+            }
+            return list;
+        } catch (IOException io) {
+            LOG.error(io);
+            return Collections.emptyList();
+        }
     }
 
     public static List<CarInformation> getCarInfoList() {
-        final String[] HEADERS = {"id", "car_model", "car_make", "city"};
-        return null;
+        final String[] HEADERS = {"id", "car_model", "car_make", "city", "time"};
+        final List<CarInformation> list = new ArrayList<>();
+        try (Reader in = new FileReader("assets/car_info.csv")) {
+            final Iterable<CSVRecord> records = CSVFormat.DEFAULT.builder()
+                    .setHeader(HEADERS)
+                    .setSkipHeaderRecord(true)
+                    .build()
+                    .parse(in);
+            for (CSVRecord record : records) {
+                final long id = Long.parseLong(record.get("id"));
+                final LocalDateTime time =
+                        Instant.ofEpochMilli(Long.parseLong(record.get("time")))
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime();
+                list.add(new CarInformation(
+                        id,
+                        record.get("car_model"),
+                        record.get("car_make"),
+                        record.get("city"),
+                        time
+                ));
+            }
+            return list;
+        } catch (IOException io) {
+            LOG.error(io);
+            return Collections.emptyList();
+        }
     }
 }
