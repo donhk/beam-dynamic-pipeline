@@ -31,4 +31,14 @@ public class CarInformation implements Serializable {
     public String getCity() {
         return city;
     }
+
+    @Override
+    public String toString() {
+        return "CarInformation{" +
+                "id=" + id +
+                ", carModel='" + carModel + '\'' +
+                ", carMake='" + carMake + '\'' +
+                ", city='" + city + '\'' +
+                '}';
+    }
 }

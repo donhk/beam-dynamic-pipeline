@@ -56,4 +56,17 @@ public class UserTxn implements Serializable {
     public double getAmount() {
         return amount;
     }
+
+    @Override
+    public String toString() {
+        return "UserTxn{" +
+                "id=" + id +
+                ", firstName='" + firstName + '\'' +
+                ", secondName='" + secondName + '\'' +
+                ", email='" + email + '\'' +
+                ", gender='" + gender + '\'' +
+                ", time=" + time +
+                ", amount=" + amount +
+                '}';
+    }
 }
