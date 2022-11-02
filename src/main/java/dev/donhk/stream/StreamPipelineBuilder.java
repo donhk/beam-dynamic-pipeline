@@ -5,12 +5,11 @@ import dev.donhk.transform.PrintPCollection;
 import dev.donhk.utilities.Utils;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.testing.TestStream;
-import org.apache.beam.sdk.transforms.windowing.AfterWatermark;
-import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
-import org.apache.beam.sdk.transforms.windowing.Window;
+import org.apache.beam.sdk.transforms.windowing.*;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TimestampedValue;
+import org.joda.time.Duration;
 import org.joda.time.Instant;
 
 import java.time.LocalDateTime;
@@ -42,9 +41,10 @@ public class StreamPipelineBuilder {
         // create the unbounded PCollection from TestStream
         PCollection<KV<Long, UserTxn>> input = pipeline.apply(streamBuilder.advanceWatermarkToInfinity());
         PCollection<KV<Long, UserTxn>> windowed =
-                input.apply(Window.<KV<Long, UserTxn>>into(new GlobalWindows())
+                input.apply(Window.<KV<Long, UserTxn>>into(FixedWindows.of(Duration.standardSeconds(1)))
                         .discardingFiredPanes()
-                        .triggering(AfterWatermark.pastEndOfWindow()));
+                        .triggering(AfterPane.elementCountAtLeast(1))
+                        .withAllowedLateness(Duration.ZERO));
 
         windowed.apply(PrintPCollection.with());
 
