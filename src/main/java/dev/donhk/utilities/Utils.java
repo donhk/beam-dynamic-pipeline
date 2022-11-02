@@ -1,6 +1,7 @@
 package dev.donhk.utilities;
 
 
+import dev.donhk.pojos.Dag;
 import dev.donhk.transform.JoinType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

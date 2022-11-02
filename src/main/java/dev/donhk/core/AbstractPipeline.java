@@ -2,8 +2,8 @@ package dev.donhk.core;
 
 import dev.donhk.transform.*;
 import dev.donhk.utilities.ConvertToDict;
-import dev.donhk.utilities.Dag;
-import dev.donhk.utilities.WordRecord;
+import dev.donhk.pojos.Dag;
+import dev.donhk.pojos.WordRecord;
 import org.apache.beam.repackaged.direct_java.runners.core.construction.renderer.PipelineDotRenderer;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.transforms.Count;

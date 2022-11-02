@@ -1,7 +1,7 @@
 package dev.donhk.transform;
 
-import dev.donhk.utilities.WordRecord;
-import dev.donhk.utilities.WordRecordTypeDescriptor;
+import dev.donhk.pojos.WordRecord;
+import dev.donhk.descriptors.WordRecordTypeDescriptor;
 import org.apache.beam.sdk.extensions.joinlibrary.Join;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.PTransform;

@@ -1,4 +1,4 @@
-package dev.donhk.utilities;
+package dev.donhk.pojos;
 
 import dev.donhk.transform.JoinType;
 
