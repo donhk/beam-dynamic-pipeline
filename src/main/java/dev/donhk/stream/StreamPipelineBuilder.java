@@ -25,40 +25,50 @@ public class StreamPipelineBuilder {
     private static final int _windowSize = 10;
 
     public void execute() {
-        final List<UserTxn> txn = Utils.getUserTxnList();
-        // create Pipeline
-        final Pipeline pipeline = Pipeline.create();
-        TestStream.Builder<KV<Long, UserTxn>>
-                streamBuilder = TestStream.create(UserTxnKVCoder.of());
-        // add all lines with timestamps to the TestStream
-        final List<TimestampedValue<KV<Long, UserTxn>>> timestamped =
-                txn.stream().map(i -> {
-                    final KV<Long, UserTxn> kv = KV.of(i.getId(), i);
-                    final LocalDateTime time = i.getTime();
-                    final long millis = time.toInstant(ZoneOffset.UTC).toEpochMilli();
-                    final Instant instant = new Instant(millis);
-                    return TimestampedValue.of(kv, instant);
-                }).collect(Collectors.toList());
-
-        for (TimestampedValue<KV<Long, UserTxn>> value : timestamped) {
-            streamBuilder = streamBuilder.addElements(value);
-        }
-
         // create the unbounded PCollection from TestStream
-        final PCollection<KV<Long, UserTxn>> input =
-                pipeline.apply(streamBuilder.advanceWatermarkToInfinity());
+        final Pipeline pipeline = Pipeline.create();
+        final PCollection<KV<Long, UserTxn>> input = initializePCollection(pipeline);
+        // split into windows
         final PCollection<KV<Long, UserTxn>> windowed =
                 input.apply(Window.<KV<Long, UserTxn>>into(new GlobalWindows())
                         .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(_windowSize)))
                         .discardingFiredPanes()
                         .withOnTimeBehavior(Window.OnTimeBehavior.FIRE_IF_NON_EMPTY));
-
+        // convert to elastic record
         final PCollection<KV<Long, Double>> added =
                 windowed.apply("aggregate", PCollectionAggregator.of());
 
         added.apply(PrintPCollection.with());
         LOG.info("Starting pipeline");
         pipeline.run().waitUntilFinish();
+    }
+
+    private PCollection<KV<Long, UserTxn>> initializePCollection(Pipeline pipeline) {
+        final List<UserTxn> txn = Utils.getUserTxnList().subList(0, 50);
+        final List<TimestampedValue<KV<Long, UserTxn>>> timestamped
+                = createTimeStampedList(txn);
+        final TestStream.Builder<KV<Long, UserTxn>> streamBuilder = createTestStream(timestamped);
+        return pipeline.apply(streamBuilder.advanceWatermarkToInfinity());
+    }
+
+    private TestStream.Builder<KV<Long, UserTxn>> createTestStream(
+            List<TimestampedValue<KV<Long, UserTxn>>> timestamped) {
+        TestStream.Builder<KV<Long, UserTxn>>
+                streamBuilder = TestStream.create(UserTxnKVCoder.of());
+        for (TimestampedValue<KV<Long, UserTxn>> value : timestamped) {
+            streamBuilder = streamBuilder.addElements(value);
+        }
+        return streamBuilder;
+    }
+
+    private List<TimestampedValue<KV<Long, UserTxn>>> createTimeStampedList(List<UserTxn> txn) {
+        return txn.stream().map(i -> {
+            final KV<Long, UserTxn> kv = KV.of(i.getId(), i);
+            final LocalDateTime time = i.getTime();
+            final long millis = time.toInstant(ZoneOffset.UTC).toEpochMilli();
+            final Instant instant = new Instant(millis);
+            return TimestampedValue.of(kv, instant);
+        }).collect(Collectors.toList());
     }
 
     private static class PCollectionAggregator
@@ -77,7 +87,8 @@ public class StreamPipelineBuilder {
         }
     }
 
-    private static class KeyAggregator implements SerializableFunction<Iterable<KV<Long, Double>>, KV<Long, Double>> {
+    private static class KeyAggregator
+            implements SerializableFunction<Iterable<KV<Long, Double>>, KV<Long, Double>> {
         public static KeyAggregator of() {
             return new KeyAggregator();
         }
