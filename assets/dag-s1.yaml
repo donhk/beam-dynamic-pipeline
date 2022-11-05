@@ -1,0 +1,12 @@
+# transform strings
+transforms:
+  - upper
+  - rep,A,I
+  - rep,D,O
+  - rep,T,U
+# string filters
+filters: .*I.*
+# top words
+top: 10
+# join type
+join: inner

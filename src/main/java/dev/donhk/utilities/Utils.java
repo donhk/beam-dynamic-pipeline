@@ -21,7 +21,6 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Utils {
@@ -41,34 +40,43 @@ public class Utils {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    public static Dag getElasticDag() {
+        return parseDagFile("assets/dag-s1.yaml");
+    }
+
     public static List<Dag> getDags() {
         final List<String> files = Arrays.asList(
                 "assets/dag-1.yaml",
                 "assets/dag-2.yaml",
                 "assets/dag-3.yaml"
         );
-        final Yaml yaml = new Yaml();
         final List<Dag> actualDags = new ArrayList<>();
         for (String file : files) {
-            final Map<String, Object> obj;
-            try {
-                obj = yaml.load(new FileReader(file));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            final Dag newDag = new Dag();
-
-            final String joinStr = (String) obj.get("join");
-
-            newDag.setTransforms((ArrayList<String>) obj.get("transforms"));
-            newDag.setJoin(JoinType.valueOf(joinStr));
-            newDag.setFilter((String) obj.get("filters"));
-            newDag.setTop((int) obj.get("top"));
-            newDag.setName(file);
-            actualDags.add(newDag);
+            actualDags.add(parseDagFile(file));
         }
         return actualDags;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Dag parseDagFile(String file) {
+        final Yaml yaml = new Yaml();
+
+        final Map<String, Object> obj;
+        try {
+            obj = yaml.load(new FileReader(file));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        final Dag newDag = new Dag();
+
+        final String joinStr = (String) obj.get("join");
+
+        newDag.setTransforms((ArrayList<String>) obj.get("transforms"));
+        newDag.setJoin(JoinType.valueOf(joinStr));
+        newDag.setFilter((String) obj.get("filters"));
+        newDag.setTop((int) obj.get("top"));
+        newDag.setName(file);
+        return newDag;
     }
 
     public static List<UserTxn> getUserTxnList() {

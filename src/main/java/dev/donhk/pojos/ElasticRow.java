@@ -17,6 +17,10 @@ public class ElasticRow implements Serializable {
         storage = new TreeMap<>();
     }
 
+    public void addCol(ElasticRowCol key, Object obj) {
+        storage.put(key.name(), obj);
+    }
+
     public void addCol(String key, Object obj) {
         storage.put(key, obj);
     }

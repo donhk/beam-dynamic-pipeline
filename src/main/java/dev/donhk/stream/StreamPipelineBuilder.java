@@ -1,6 +1,9 @@
 package dev.donhk.stream;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import dev.donhk.pojos.Dag;
+import dev.donhk.pojos.ElasticRow;
+import dev.donhk.pojos.ElasticRowCol;
 import dev.donhk.pojos.UserTxn;
 import dev.donhk.transform.PrintPCollection;
 import dev.donhk.utilities.Utils;
@@ -23,7 +26,7 @@ import java.util.stream.StreamSupport;
 public class StreamPipelineBuilder {
     private static final Logger LOG = LogManager.getLogger(StreamPipelineBuilder.class);
     private static final int _windowSize = 10;
-    private static final int _elements = 50;
+    private static final int _elements = 20;
 
     public void execute() {
         // create the unbounded PCollection from TestStream
@@ -31,11 +34,43 @@ public class StreamPipelineBuilder {
         // split into windows
         final PCollection<KV<Long, UserTxn>> windowed = window(pipeline);
         // convert to elastic record
-        final PCollection<KV<Long, Double>> added =
-                windowed.apply("aggregate", PCollectionAggregator.of());
-        added.apply(PrintPCollection.with());
+        PCollection<KV<Long, ElasticRow>> elastic = windowed.apply(UserTxn2ElasticRow.of());
+        final Dag dag = Utils.getElasticDag();
+        for (String transformation : dag.getTransforms()) {
+            LOG.info("Applying transformation {}", transformation);
+        }
+//        final PCollection<KV<Long, Double>> added =
+//                windowed.apply("aggregate", PCollectionAggregator.of());
+        elastic.apply(PrintPCollection.with());
         LOG.info("Starting pipeline");
         pipeline.run().waitUntilFinish();
+    }
+
+    private static final class UserTxn2ElasticRow
+            extends PTransform<PCollection<KV<Long, UserTxn>>, PCollection<KV<Long, ElasticRow>>> {
+        public static UserTxn2ElasticRow of() {
+            return new UserTxn2ElasticRow();
+        }
+
+        @Override
+        public PCollection<KV<Long, ElasticRow>> expand(PCollection<KV<Long, UserTxn>> input) {
+            return input.apply(MapElements.into(TypeDescriptors.kvs(
+                            TypeDescriptors.longs(),
+                            TypeDescriptor.of(ElasticRow.class)))
+                    .via((SerializableFunction<KV<Long, UserTxn>, KV<Long, ElasticRow>>) input1 -> {
+                                final ElasticRow row = ElasticRow.of();
+                                final UserTxn txn = input1.getValue();
+                                row.addCol(ElasticRowCol.ID, txn.getId());
+                                row.addCol(ElasticRowCol.AMOUNT, txn.getAmount());
+                                row.addCol(ElasticRowCol.EMAIL, txn.getEmail());
+                                row.addCol(ElasticRowCol.FIRST_NAME, txn.getFirstName());
+                                row.addCol(ElasticRowCol.SECOND_NAME, txn.getSecondName());
+                                row.addCol(ElasticRowCol.GENDER, txn.getGender());
+                                row.addCol(ElasticRowCol.TIME, txn.getTime());
+                                return KV.of(input1.getKey(), row);
+                            }
+                    ));
+        }
     }
 
     private PCollection<KV<Long, UserTxn>> window(Pipeline pipeline) {
