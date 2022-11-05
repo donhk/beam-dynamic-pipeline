@@ -22,9 +22,10 @@ import java.util.stream.StreamSupport;
 
 public class StreamPipelineBuilder {
     private static final Logger LOG = LogManager.getLogger(StreamPipelineBuilder.class);
+    private static final int _windowSize = 10;
 
     public void execute() {
-        final List<UserTxn> txn = Utils.getUserTxnList().subList(0, 10);
+        final List<UserTxn> txn = Utils.getUserTxnList();
         // create Pipeline
         final Pipeline pipeline = Pipeline.create();
         TestStream.Builder<KV<Long, UserTxn>>
@@ -44,38 +45,53 @@ public class StreamPipelineBuilder {
         }
 
         // create the unbounded PCollection from TestStream
-        PCollection<KV<Long, UserTxn>> input = pipeline.apply(streamBuilder.advanceWatermarkToInfinity());
-        PCollection<KV<Long, UserTxn>> windowed =
+        final PCollection<KV<Long, UserTxn>> input =
+                pipeline.apply(streamBuilder.advanceWatermarkToInfinity());
+        final PCollection<KV<Long, UserTxn>> windowed =
                 input.apply(Window.<KV<Long, UserTxn>>into(new GlobalWindows())
-                        .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(5)))
+                        .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(_windowSize)))
                         .discardingFiredPanes()
                         .withOnTimeBehavior(Window.OnTimeBehavior.FIRE_IF_NON_EMPTY));
 
-        PCollection<KV<Long, Double>> added = windowed.apply("aggregate", new PTransform<>() {
-            @Override
-            public PCollection<KV<Long, Double>> expand(PCollection<KV<Long, UserTxn>> input) {
-                return input.apply(
-                        MapElements.into(
-                                TypeDescriptors.kvs(TypeDescriptors.longs(), TypeDescriptors.doubles())
-                        ).via((record) -> KV.of(record.getKey(), record.getValue().getAmount()))
-                ).apply(Combine.globally((SerializableFunction<Iterable<KV<Long, Double>>, KV<Long, Double>>) input1 -> {
-                    AtomicLong myLong = new AtomicLong();
-                    AtomicDouble myDouble = new AtomicDouble();
-                    StreamSupport
-                            .stream(input1.spliterator(), false)
-                            .forEach(e -> {
-                                LOG.info(e.getKey());
-                                myLong.addAndGet(e.getKey());
-                                myDouble.addAndGet(e.getValue());
-                            });
-                    LOG.info("new window");
-                    return KV.of(myLong.get(), myDouble.get());
-                }));
-            }
-        });
+        final PCollection<KV<Long, Double>> added =
+                windowed.apply("aggregate", PCollectionAggregator.of());
 
         added.apply(PrintPCollection.with());
-
+        LOG.info("Starting pipeline");
         pipeline.run().waitUntilFinish();
+    }
+
+    private static class PCollectionAggregator
+            extends PTransform<PCollection<KV<Long, UserTxn>>, PCollection<KV<Long, Double>>> {
+        public static PCollectionAggregator of() {
+            return new PCollectionAggregator();
+        }
+
+        @Override
+        public PCollection<KV<Long, Double>> expand(PCollection<KV<Long, UserTxn>> input) {
+            return input.apply(
+                    MapElements.into(
+                            TypeDescriptors.kvs(TypeDescriptors.longs(), TypeDescriptors.doubles())
+                    ).via((record) -> KV.of(record.getKey(), record.getValue().getAmount()))
+            ).apply(Combine.globally(KeyAggregator.of()));
+        }
+    }
+
+    private static class KeyAggregator implements SerializableFunction<Iterable<KV<Long, Double>>, KV<Long, Double>> {
+        public static KeyAggregator of() {
+            return new KeyAggregator();
+        }
+
+        @Override
+        public KV<Long, Double> apply(Iterable<KV<Long, Double>> input) {
+            AtomicLong myLong = new AtomicLong();
+            AtomicDouble myDouble = new AtomicDouble();
+            StreamSupport.stream(input.spliterator(), false)
+                    .forEach(e -> {
+                        myLong.addAndGet(e.getKey());
+                        myDouble.addAndGet(e.getValue());
+                    });
+            return KV.of(myLong.get(), myDouble.get());
+        }
     }
 }
