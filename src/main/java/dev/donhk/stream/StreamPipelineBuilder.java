@@ -23,28 +23,33 @@ import java.util.stream.StreamSupport;
 public class StreamPipelineBuilder {
     private static final Logger LOG = LogManager.getLogger(StreamPipelineBuilder.class);
     private static final int _windowSize = 10;
+    private static final int _elements = 50;
 
     public void execute() {
         // create the unbounded PCollection from TestStream
         final Pipeline pipeline = Pipeline.create();
-        final PCollection<KV<Long, UserTxn>> input = initializePCollection(pipeline);
         // split into windows
-        final PCollection<KV<Long, UserTxn>> windowed =
-                input.apply(Window.<KV<Long, UserTxn>>into(new GlobalWindows())
-                        .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(_windowSize)))
-                        .discardingFiredPanes()
-                        .withOnTimeBehavior(Window.OnTimeBehavior.FIRE_IF_NON_EMPTY));
+        final PCollection<KV<Long, UserTxn>> windowed = window(pipeline);
         // convert to elastic record
         final PCollection<KV<Long, Double>> added =
                 windowed.apply("aggregate", PCollectionAggregator.of());
-
         added.apply(PrintPCollection.with());
         LOG.info("Starting pipeline");
         pipeline.run().waitUntilFinish();
     }
 
+    private PCollection<KV<Long, UserTxn>> window(Pipeline pipeline) {
+        final PCollection<KV<Long, UserTxn>> input =
+                initializePCollection(pipeline);
+        return input.apply(Window.<KV<Long, UserTxn>>into(new GlobalWindows())
+                .triggering(Repeatedly.forever(
+                        AfterPane.elementCountAtLeast(_windowSize))
+                ).discardingFiredPanes()
+                .withOnTimeBehavior(Window.OnTimeBehavior.FIRE_IF_NON_EMPTY));
+    }
+
     private PCollection<KV<Long, UserTxn>> initializePCollection(Pipeline pipeline) {
-        final List<UserTxn> txn = Utils.getUserTxnList().subList(0, 50);
+        final List<UserTxn> txn = Utils.getUserTxnList().subList(0, _elements);
         final List<TimestampedValue<KV<Long, UserTxn>>> timestamped
                 = createTimeStampedList(txn);
         final TestStream.Builder<KV<Long, UserTxn>> streamBuilder = createTestStream(timestamped);
