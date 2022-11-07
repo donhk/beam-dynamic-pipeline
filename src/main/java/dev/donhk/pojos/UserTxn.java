@@ -12,6 +12,8 @@ public class UserTxn implements Serializable {
     private final String gender;
     private final LocalDateTime time;
     private final double amount;
+    private final double match;
+    private final double memory;
 
     public UserTxn(long id,
                    String firstName,
@@ -19,7 +21,10 @@ public class UserTxn implements Serializable {
                    String email,
                    String gender,
                    LocalDateTime time,
-                   double amount) {
+                   double amount,
+                   double match,
+                   double memory
+    ) {
         this.id = id;
         this.firstName = firstName;
         this.secondName = secondName;
@@ -27,6 +32,8 @@ public class UserTxn implements Serializable {
         this.gender = gender;
         this.time = time;
         this.amount = amount;
+        this.match = match;
+        this.memory = memory;
     }
 
     public long getId() {
@@ -67,6 +74,16 @@ public class UserTxn implements Serializable {
                 ", gender='" + gender + '\'' +
                 ", time=" + time +
                 ", amount=" + amount +
+                ", match=" + match +
+                ", memory=" + memory +
                 '}';
+    }
+
+    public double getMemory() {
+        return memory;
+    }
+
+    public double getMatch() {
+        return match;
     }
 }

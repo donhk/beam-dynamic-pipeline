@@ -1,11 +1,13 @@
 package dev.donhk.stream;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import dev.donhk.elastict.SumColumnsKeep;
 import dev.donhk.pojos.Dag;
 import dev.donhk.pojos.ElasticRow;
 import dev.donhk.pojos.ElasticRowCol;
 import dev.donhk.pojos.UserTxn;
 import dev.donhk.transform.PrintPCollection;
+import dev.donhk.utilities.SumColumnsKeepParser;
 import dev.donhk.utilities.Utils;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.testing.TestStream;
@@ -38,9 +40,12 @@ public class StreamPipelineBuilder {
         final Dag dag = Utils.getElasticDag();
         for (String transformation : dag.getTransforms()) {
             LOG.info("Applying transformation {}", transformation);
+            if (transformation.contains("SumColumns")) {
+                final SumColumnsKeepParser parser = new SumColumnsKeepParser(transformation);
+                elastic = elastic.apply(transformation, SumColumnsKeep.as(parser.columnNames(), parser.outputCol()));
+            }
         }
-//        final PCollection<KV<Long, Double>> added =
-//                windowed.apply("aggregate", PCollectionAggregator.of());
+
         elastic.apply(PrintPCollection.with());
         LOG.info("Starting pipeline");
         pipeline.run().waitUntilFinish();
@@ -61,12 +66,14 @@ public class StreamPipelineBuilder {
                                 final ElasticRow row = ElasticRow.of();
                                 final UserTxn txn = input1.getValue();
                                 row.addCol(ElasticRowCol.ID, txn.getId());
-                                row.addCol(ElasticRowCol.AMOUNT, txn.getAmount());
                                 row.addCol(ElasticRowCol.EMAIL, txn.getEmail());
                                 row.addCol(ElasticRowCol.FIRST_NAME, txn.getFirstName());
                                 row.addCol(ElasticRowCol.SECOND_NAME, txn.getSecondName());
                                 row.addCol(ElasticRowCol.GENDER, txn.getGender());
                                 row.addCol(ElasticRowCol.TIME, txn.getTime());
+                                row.addCol(ElasticRowCol.AMOUNT, txn.getAmount());
+                                row.addCol(ElasticRowCol.MATCH, txn.getMatch());
+                                row.addCol(ElasticRowCol.MEMORY, txn.getMemory());
                                 return KV.of(input1.getKey(), row);
                             }
                     ));

@@ -80,7 +80,8 @@ public class Utils {
     }
 
     public static List<UserTxn> getUserTxnList() {
-        final String[] HEADERS = {"id", "first_name", "last_name", "email", "gender", "time", "amount"};
+        //id,first_name,last_name,email,gender,time,amount,match,memory
+        final String[] HEADERS = {"id", "first_name", "last_name", "email", "gender", "time", "amount", "match", "memory"};
         final List<UserTxn> list = new ArrayList<>();
         try (Reader in = new FileReader("assets/user_txn_list.csv")) {
             final Iterable<CSVRecord> records = CSVFormat.DEFAULT.builder()
@@ -93,8 +94,10 @@ public class Utils {
                         Instant.ofEpochMilli(Long.parseLong(record.get("time")))
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDateTime();
-                final long id = Integer.parseInt(record.get("id"));
+                final long id = Long.parseLong(record.get("id"));
                 final String amountStr = record.get("amount").replace("$", "");
+                final String match = record.get("match");
+                final String memory = record.get("memory");
                 list.add(new UserTxn(
                         id,
                         record.get("first_name"),
@@ -102,7 +105,9 @@ public class Utils {
                         record.get("email"),
                         record.get("gender"),
                         time,
-                        Double.parseDouble(amountStr)
+                        Double.parseDouble(amountStr),
+                        Double.parseDouble(match),
+                        Double.parseDouble(memory)
                 ));
             }
             return list;

@@ -1,9 +1,9 @@
 # transform strings
 transforms:
   - upper
-  - rep,A,I
-  - rep,D,O
-  - rep,T,U
+  - SumColumnsKeep[match,amount,memory],correlation
+  - SumColumnsKeep[match,memory],memory_match
+  - SumColumnsKeep[memory_match,correlation],activity
 # string filters
 filters: .*I.*
 # top words
