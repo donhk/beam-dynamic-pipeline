@@ -1,12 +1,14 @@
 package dev.donhk.stream;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import dev.donhk.elastict.RemoveCol;
 import dev.donhk.elastict.SumColumnsKeep;
 import dev.donhk.pojos.Dag;
 import dev.donhk.pojos.ElasticRow;
 import dev.donhk.pojos.ElasticRowCol;
 import dev.donhk.pojos.UserTxn;
 import dev.donhk.transform.PrintPCollection;
+import dev.donhk.utilities.RemoveColParser;
 import dev.donhk.utilities.SumColumnsKeepParser;
 import dev.donhk.utilities.Utils;
 import org.apache.beam.sdk.Pipeline;
@@ -43,6 +45,10 @@ public class StreamPipelineBuilder {
             if (transformation.contains("SumColumns")) {
                 final SumColumnsKeepParser parser = new SumColumnsKeepParser(transformation);
                 elastic = elastic.apply(transformation, SumColumnsKeep.as(parser.columnNames(), parser.outputCol()));
+            }
+            if (transformation.contains("RemoveCol")) {
+                final RemoveColParser parser = new RemoveColParser(transformation);
+                elastic = elastic.apply(transformation, RemoveCol.of(parser.colName()));
             }
         }
 

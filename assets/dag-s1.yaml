@@ -4,6 +4,9 @@ transforms:
   - SumColumnsKeep[match,amount,memory],correlation
   - SumColumnsKeep[match,memory],memory_match
   - SumColumnsKeep[memory_match,correlation],activity
+  - RemoveCol[GENDER]
+  - RemoveCol[EMAIL]
+  - RemoveCol[SECOND_NAME]
 # string filters
 filters: .*I.*
 # top words
