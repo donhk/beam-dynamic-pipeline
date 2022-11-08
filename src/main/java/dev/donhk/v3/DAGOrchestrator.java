@@ -6,6 +6,7 @@ import dev.donhk.pojos.*;
 import dev.donhk.stream.CarInfo2ElasticRow;
 import dev.donhk.stream.StreamUtils;
 import dev.donhk.stream.UserTxn2ElasticRow;
+import dev.donhk.transform.FilterByDimension;
 import dev.donhk.transform.PrintPCollection;
 import dev.donhk.utilities.RemoveColParser;
 import dev.donhk.utilities.SumColumnsKeepParser;
@@ -81,7 +82,7 @@ public class DAGOrchestrator {
             for (String transform : dagV3.getOutputs()) {
                 LOG.info(transform);
             }
-            elastic.apply(PrintPCollection.with(dag));
+            elastic.apply(dag, PrintPCollection.with(dag));
         }
     }
 
@@ -121,6 +122,9 @@ public class DAGOrchestrator {
         if (transformation.contains("RemoveCol")) {
             final RemoveColParser parser = new RemoveColParser(transformation);
             return elastic.apply(transformation, RemoveCol.of(parser.colName()));
+        }
+        if (transformation.startsWith("FilterByDimension")) {
+            return elastic.apply(transformation, FilterByDimension.with(transformation));
         }
         return elastic;
     }

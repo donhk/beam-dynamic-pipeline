@@ -1,8 +1,8 @@
 # transform strings
 # id,first_name,last_name,email,gender,time,amount,match,memory
 user_transactions:
-  - Filter[first_name like '*.o.*']
-  - upper[email]
+  - FilterByDimension[first_name like '*.z.*']
+  - Upper[email]
   - SumColumnsKeep[match,amount,memory],correlation
   - SumColumnsKeep[match,memory],memory_match
   - SumColumnsKeep[memory_match,correlation],activity
@@ -10,8 +10,8 @@ user_transactions:
   - RemoveCol[SECOND_NAME]
 # car_id,car_model,car_make,city,car_time,cost,promo
 car_info:
-  - upper['car_model']
-  - Filter[car_make like '*.o.*']
+  - Upper['car_model']
+  - FilterByDimension[car_make like '*.z.*']
 joins:
   - user_transactions[id] = car_info[car_id]
 post-join-transforms:

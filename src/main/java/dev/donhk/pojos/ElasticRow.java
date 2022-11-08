@@ -30,6 +30,17 @@ public class ElasticRow implements Serializable, Cloneable {
         storage.remove(key);
     }
 
+    public boolean hasColumn(String key) {
+        return storage.containsKey(key);
+    }
+
+    public String getDimension(String key) {
+        if (!hasColumn(key)) {
+            throw new IllegalArgumentException(key);
+        }
+        return (String) storage.get(key);
+    }
+
     public double getScalarCol(String key) {
         if (!storage.containsKey(key)) {
             throw new IllegalArgumentException("no " + key + " in " + storage);
