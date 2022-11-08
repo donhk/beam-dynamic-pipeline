@@ -12,8 +12,10 @@ user_transactions:
 car_info:
   - upper['car_model']
   - Filter[car_make like '*.o.*']
-join:
+joins:
   - user_transactions[id] = car_info[car_id]
 post-join-transforms:
   - SumColumnsKeep[cost,activity],activity_cost
   - RemoveCol[GENDER]
+output:
+  - some value

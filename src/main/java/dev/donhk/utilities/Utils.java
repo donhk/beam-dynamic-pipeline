@@ -1,10 +1,7 @@
 package dev.donhk.utilities;
 
 
-import dev.donhk.pojos.CarInformation;
-import dev.donhk.pojos.Comment;
-import dev.donhk.pojos.Dag;
-import dev.donhk.pojos.UserTxn;
+import dev.donhk.pojos.*;
 import dev.donhk.transform.JoinType;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -42,6 +39,28 @@ public class Utils {
 
     public static Dag getElasticDag() {
         return parseDagFile("assets/dag-s1.yaml");
+    }
+
+    @SuppressWarnings("unchecked")
+    public static DagV3 getDagV3() {
+        final String input = "assets/dag-s2.yaml";
+        final Yaml yaml = new Yaml();
+
+        final Map<String, Object> obj;
+        try {
+            obj = yaml.load(new FileReader(input));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        final DagV3 newDag = new DagV3();
+
+        newDag.setUserTransactions((ArrayList<String>) obj.get("user_transactions"));
+        newDag.setCarInfo((ArrayList<String>) obj.get("car_info"));
+        newDag.setJoins((ArrayList<String>) obj.get("joins"));
+        newDag.setOutputs((ArrayList<String>) obj.get("output"));
+        newDag.setName(input);
+
+        return newDag;
     }
 
     public static List<Dag> getDags() {

@@ -39,7 +39,7 @@ public class StreamUtils {
         }
 
         return pipeline.apply(streamBuilder.advanceWatermarkToInfinity())
-                .apply(Window.<KV<Long, CarInformation>>into(new GlobalWindows())
+                .apply("car-info-window", Window.<KV<Long, CarInformation>>into(new GlobalWindows())
                         .triggering(Repeatedly.forever(
                                 AfterPane.elementCountAtLeast(_windowSize))
                         ).discardingFiredPanes()
@@ -48,7 +48,7 @@ public class StreamUtils {
 
     public static PCollection<KV<Long, UserTxn>> userTxnWindowData(Pipeline pipeline, int _elements, int _windowSize) {
         final PCollection<KV<Long, UserTxn>> input = initializePCollection(pipeline, _elements);
-        return input.apply(Window.<KV<Long, UserTxn>>into(new GlobalWindows())
+        return input.apply("user-txn-window", Window.<KV<Long, UserTxn>>into(new GlobalWindows())
                 .triggering(Repeatedly.forever(
                         AfterPane.elementCountAtLeast(_windowSize))
                 ).discardingFiredPanes()
