@@ -67,11 +67,12 @@ public class DAGOrchestrator {
 
     private void postJoins(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition, DagV3 dagV3) {
         LOG.info("post join transforms");
-        for (String dag : dagDefinition.keySet()) {
-            PCollection<KV<Long, ElasticRow>> elastic = dagDefinition.get(dag);
+        for (String metricDag : dagDefinition.keySet()) {
+            PCollection<KV<Long, ElasticRow>> elastic = dagDefinition.get(metricDag);
             for (String transform : dagV3.getPostJoinTransforms()) {
                 LOG.info(transform);
                 elastic = transforms(elastic, transform);
+                dagDefinition.put(metricDag, elastic);
             }
         }
     }
@@ -84,6 +85,7 @@ public class DAGOrchestrator {
                 LOG.info(transform);
             }
             elastic.apply(dag, PrintPCollection.with(dag));
+            dagDefinition.put(dag, elastic);
         }
     }
 
