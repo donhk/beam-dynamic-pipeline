@@ -143,7 +143,7 @@ public class Utils {
     }
 
     public static List<CarInformation> getCarInfoList() {
-        final String[] HEADERS = {"id", "car_model", "car_make", "city", "time"};
+        final String[] HEADERS = {"id", "car_model", "car_make", "city", "car_time", "cost", "promo"};
         final List<CarInformation> list = new ArrayList<>();
         try (Reader in = new FileReader("assets/car_info.csv")) {
             final Iterable<CSVRecord> records = CSVFormat.DEFAULT.builder()
@@ -154,7 +154,7 @@ public class Utils {
             for (CSVRecord record : records) {
                 final long id = Long.parseLong(record.get("id"));
                 final LocalDateTime time =
-                        Instant.ofEpochMilli(Long.parseLong(record.get("time")))
+                        Instant.ofEpochMilli(Long.parseLong(record.get("car_time")))
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDateTime();
                 list.add(new CarInformation(
@@ -162,7 +162,9 @@ public class Utils {
                         record.get("car_model"),
                         record.get("car_make"),
                         record.get("city"),
-                        time
+                        time,
+                        Double.parseDouble(record.get("cost")),
+                        Double.parseDouble(record.get("promo"))
                 ));
             }
             return list;

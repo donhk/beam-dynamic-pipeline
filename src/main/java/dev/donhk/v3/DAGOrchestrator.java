@@ -2,9 +2,11 @@ package dev.donhk.v3;
 
 import dev.donhk.elastict.RemoveCol;
 import dev.donhk.elastict.SumColumnsKeep;
+import dev.donhk.pojos.CarInformation;
 import dev.donhk.pojos.Dag;
 import dev.donhk.pojos.ElasticRow;
 import dev.donhk.pojos.UserTxn;
+import dev.donhk.stream.CarInfo2ElasticRow;
 import dev.donhk.stream.StreamUtils;
 import dev.donhk.stream.UserTxn2ElasticRow;
 import dev.donhk.transform.PrintPCollection;
@@ -26,9 +28,16 @@ public class DAGOrchestrator {
         // create the unbounded PCollection from TestStream
         final Pipeline pipeline = Pipeline.create();
         // split into windows
-        final PCollection<KV<Long, UserTxn>> windowedUserTxn = StreamUtils.UserTxnWindowData(pipeline, _elements, _windowSize);
+        final PCollection<KV<Long, UserTxn>> windowedUserTxn =
+                StreamUtils.userTxnWindowData(pipeline, _elements, _windowSize);
+        final PCollection<KV<Long, CarInformation>> carInfoWindowData =
+                StreamUtils.carInfoWindowData(pipeline, _elements, _windowSize);
         // convert to elastic record
         PCollection<KV<Long, ElasticRow>> elastic = windowedUserTxn.apply(UserTxn2ElasticRow.of());
+        PCollection<KV<Long, ElasticRow>> elastic2 = carInfoWindowData.apply(CarInfo2ElasticRow.of());
+
+        elastic2.apply(PrintPCollection.with());
+
         final Dag dag = Utils.getElasticDag();
         for (String transformation : dag.getTransforms()) {
             LOG.info("Applying transformation {}", transformation);
