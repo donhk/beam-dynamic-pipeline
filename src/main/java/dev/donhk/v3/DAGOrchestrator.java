@@ -7,6 +7,7 @@ import dev.donhk.stream.CarInfo2ElasticRow;
 import dev.donhk.stream.StreamUtils;
 import dev.donhk.stream.UserTxn2ElasticRow;
 import dev.donhk.transform.FilterByDimension;
+import dev.donhk.transform.JoinWrapper;
 import dev.donhk.transform.PrintPCollection;
 import dev.donhk.transform.UpperDimension;
 import dev.donhk.utilities.RemoveColParser;
@@ -24,6 +25,8 @@ public class DAGOrchestrator {
     private static final Logger LOG = LogManager.getLogger(DAGOrchestrator.class);
     private static final int _windowSize = 10;
     private static final int _elements = 20;
+    private static final String userTxn = "userTxn";
+    private static final String carInfo = "carInfo";
 
     public void execute() {
         // create the unbounded PCollection from TestStream
@@ -45,7 +48,7 @@ public class DAGOrchestrator {
         //next with carInfo
         carInfoDataSource(dagDefinition, carInfoWindowData, dagV3);
         //next joins
-        //joins(dagDefinition, dagV3);
+        joins(dagDefinition, dagV3);
         //next post joins
         //postJoins(dagDefinition, dagV3);
         //next outputs
@@ -57,12 +60,12 @@ public class DAGOrchestrator {
 
     private void joins(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition, DagV3 dagV3) {
         LOG.info("joins");
-        for (String dag : dagDefinition.keySet()) {
-            //PCollection<KV<Long, ElasticRow>> elastic = dagDefinition.get(dags);
-            for (String join : dagV3.getJoins()) {
-                LOG.info("dag {} join {}", dag, join);
-            }
+        if (dagV3.getJoins().isEmpty()) {
+            return;
         }
+        final String join = dagV3.getJoins().get(0);
+        LOG.info("dag {} join {}", "x", join);
+        JoinWrapper.wrapper(join, dagDefinition).execute();
     }
 
     private void postJoins(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition, DagV3 dagV3) {
@@ -95,7 +98,6 @@ public class DAGOrchestrator {
         if (dagV3.getUserTransactions().isEmpty()) {
             return;
         }
-        final String userTxn = "userTxn";
         PCollection<KV<Long, ElasticRow>> elastic = windowedUserTxn.apply(UserTxn2ElasticRow.of());
         dagDefinition.put(userTxn, elastic);
         for (String transformation : dagV3.getUserTransactions()) {
@@ -107,7 +109,6 @@ public class DAGOrchestrator {
     private void carInfoDataSource(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition,
                                    PCollection<KV<Long, CarInformation>> carInfoWindowData,
                                    DagV3 dagV3) {
-        final String carInfo = "carInfo";
         if (!dagV3.getCarInfo().isEmpty()) {
             PCollection<KV<Long, ElasticRow>> elastic = carInfoWindowData.apply(CarInfo2ElasticRow.of());
             dagDefinition.put(carInfo, elastic);
