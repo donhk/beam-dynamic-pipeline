@@ -16,10 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("Duplicates")
 public class DAGOrchestrator {
     private static final Logger LOG = LogManager.getLogger(DAGOrchestrator.class);
     private static final int _windowSize = 10;
@@ -30,34 +28,101 @@ public class DAGOrchestrator {
         final Pipeline pipeline = Pipeline.create();
         // split into windows
         // first pass
+        //
         final PCollection<KV<Long, UserTxn>> windowedUserTxn =
                 StreamUtils.userTxnWindowData(pipeline, _elements, _windowSize);
         final PCollection<KV<Long, CarInformation>> carInfoWindowData =
                 StreamUtils.carInfoWindowData(pipeline, _elements, _windowSize);
+        //
         // second pass
+        //
+        final DagV3 dagV3 = Utils.getDagV3();
         final Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition = new LinkedHashMap<>();
+        //start with userTxn
+        userTxnDataSource(dagDefinition, windowedUserTxn, dagV3);
+        //next with carInfo
+        carInfoDataSource(dagDefinition, carInfoWindowData, dagV3);
+        //next joins
+        joins(dagDefinition, dagV3);
+        //next post joins
+        postJoins(dagDefinition, dagV3);
+        //next outputs
+        outputs(dagDefinition, dagV3);
 
-        // convert to elastic record
-        PCollection<KV<Long, ElasticRow>> elastic = windowedUserTxn.apply(UserTxn2ElasticRow.of());
-        PCollection<KV<Long, ElasticRow>> elastic2 = carInfoWindowData.apply(CarInfo2ElasticRow.of());
-        DagV3 dagV3 = Utils.getDagV3();
-
-        final Dag dag = Utils.getElasticDag();
-        for (String transformation : dag.getTransforms()) {
-            LOG.info("Applying transformation {}", transformation);
-            if (transformation.contains("SumColumns")) {
-                final SumColumnsKeepParser parser = new SumColumnsKeepParser(transformation);
-                elastic = elastic.apply(transformation, SumColumnsKeep.as(parser.columnNames(), parser.outputCol()));
-            }
-            if (transformation.contains("RemoveCol")) {
-                final RemoveColParser parser = new RemoveColParser(transformation);
-                elastic = elastic.apply(transformation, RemoveCol.of(parser.colName()));
-            }
-        }
-
-        elastic.apply(PrintPCollection.with());
         LOG.info("Starting pipeline");
         pipeline.run().waitUntilFinish();
+    }
+
+    private void joins(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition, DagV3 dagV3) {
+        LOG.info("joins");
+        for (String dag : dagDefinition.keySet()) {
+            //PCollection<KV<Long, ElasticRow>> elastic = dagDefinition.get(dags);
+            for (String join : dagV3.getJoins()) {
+                LOG.info("dag {} join {}", dag, join);
+            }
+        }
+    }
+
+    private void postJoins(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition, DagV3 dagV3) {
+        LOG.info("post join transforms");
+        for (String dag : dagDefinition.keySet()) {
+            PCollection<KV<Long, ElasticRow>> elastic = dagDefinition.get(dag);
+            for (String transform : dagV3.getPostJoinTransforms()) {
+                LOG.info(transform);
+                elastic = transforms(elastic, transform);
+            }
+        }
+    }
+
+    private void outputs(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition, DagV3 dagV3) {
+        LOG.info("outputs");
+        for (String dag : dagDefinition.keySet()) {
+            PCollection<KV<Long, ElasticRow>> elastic = dagDefinition.get(dag);
+            for (String transform : dagV3.getOutputs()) {
+                LOG.info(transform);
+            }
+            elastic.apply(PrintPCollection.with(dag));
+        }
+    }
+
+    private void userTxnDataSource(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition,
+                                   PCollection<KV<Long, UserTxn>> windowedUserTxn,
+                                   DagV3 dagV3) {
+        final String userTxn = "userTxn";
+        if (!dagV3.getUserTransactions().isEmpty()) {
+            PCollection<KV<Long, ElasticRow>> elastic = windowedUserTxn.apply(UserTxn2ElasticRow.of());
+            dagDefinition.put(userTxn, elastic);
+            for (String transformation : dagV3.getUserTransactions()) {
+                elastic = transforms(elastic, transformation);
+            }
+        }
+    }
+
+    private void carInfoDataSource(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition,
+                                   PCollection<KV<Long, CarInformation>> carInfoWindowData,
+                                   DagV3 dagV3) {
+        final String carInfo = "carInfo";
+        if (!dagV3.getCarInfo().isEmpty()) {
+            PCollection<KV<Long, ElasticRow>> elastic = carInfoWindowData.apply(CarInfo2ElasticRow.of());
+            dagDefinition.put(carInfo, elastic);
+            for (String transformation : dagV3.getCarInfo()) {
+                elastic = transforms(elastic, transformation);
+            }
+        }
+    }
+
+    private PCollection<KV<Long, ElasticRow>> transforms(PCollection<KV<Long, ElasticRow>> elastic,
+                                                         String transformation) {
+        LOG.info("Applying transformation {}", transformation);
+        if (transformation.contains("SumColumns")) {
+            final SumColumnsKeepParser parser = new SumColumnsKeepParser(transformation);
+            return elastic.apply(transformation, SumColumnsKeep.as(parser.columnNames(), parser.outputCol()));
+        }
+        if (transformation.contains("RemoveCol")) {
+            final RemoveColParser parser = new RemoveColParser(transformation);
+            return elastic.apply(transformation, RemoveCol.of(parser.colName()));
+        }
+        return elastic;
     }
 
 }

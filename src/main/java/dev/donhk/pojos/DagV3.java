@@ -1,15 +1,16 @@
 package dev.donhk.pojos;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 public class DagV3 implements Serializable {
     private String name;
-    private List<String> userTransactions;
-    private List<String> carInfo;
-    private List<String> joins;
-    private List<String> postJoinTransforms;
-    private List<String> outputs;
+    private List<String> userTransactions = Collections.emptyList();
+    private List<String> carInfo = Collections.emptyList();
+    private List<String> joins = Collections.emptyList();
+    private List<String> postJoinTransforms = Collections.emptyList();
+    private List<String> outputs = Collections.emptyList();
 
     public DagV3() {
     }
