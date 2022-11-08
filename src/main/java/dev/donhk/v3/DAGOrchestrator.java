@@ -44,9 +44,9 @@ public class DAGOrchestrator {
         //next with carInfo
         carInfoDataSource(dagDefinition, carInfoWindowData, dagV3);
         //next joins
-        joins(dagDefinition, dagV3);
+        //joins(dagDefinition, dagV3);
         //next post joins
-        postJoins(dagDefinition, dagV3);
+        //postJoins(dagDefinition, dagV3);
         //next outputs
         outputs(dagDefinition, dagV3);
 
@@ -89,13 +89,15 @@ public class DAGOrchestrator {
     private void userTxnDataSource(Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition,
                                    PCollection<KV<Long, UserTxn>> windowedUserTxn,
                                    DagV3 dagV3) {
+        if (dagV3.getUserTransactions().isEmpty()) {
+            return;
+        }
         final String userTxn = "userTxn";
-        if (!dagV3.getUserTransactions().isEmpty()) {
-            PCollection<KV<Long, ElasticRow>> elastic = windowedUserTxn.apply(UserTxn2ElasticRow.of());
+        PCollection<KV<Long, ElasticRow>> elastic = windowedUserTxn.apply(UserTxn2ElasticRow.of());
+        dagDefinition.put(userTxn, elastic);
+        for (String transformation : dagV3.getUserTransactions()) {
+            elastic = transforms(elastic, transformation);
             dagDefinition.put(userTxn, elastic);
-            for (String transformation : dagV3.getUserTransactions()) {
-                elastic = transforms(elastic, transformation);
-            }
         }
     }
 
@@ -108,6 +110,7 @@ public class DAGOrchestrator {
             dagDefinition.put(carInfo, elastic);
             for (String transformation : dagV3.getCarInfo()) {
                 elastic = transforms(elastic, transformation);
+                dagDefinition.put(carInfo, elastic);
             }
         }
     }

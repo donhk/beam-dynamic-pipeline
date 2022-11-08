@@ -6,12 +6,15 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FilterByDimension extends PTransform<PCollection<KV<Long, ElasticRow>>, PCollection<KV<Long, ElasticRow>>> {
+    private static final Logger LOG = LogManager.getLogger(FilterByDimension.class);
     private final String transform;
 
     private FilterByDimension(String transform) {
@@ -29,7 +32,7 @@ public class FilterByDimension extends PTransform<PCollection<KV<Long, ElasticRo
         final Pattern colNamePattern = Pattern.compile(".*\\[(.*)\\s+like.*]");
         final Matcher regexMatcher = regexPattern.matcher(transform);
         final Matcher colNameMatcher = colNamePattern.matcher(transform);
-        if (!regexMatcher.find() || colNameMatcher.find()) {
+        if (!regexMatcher.find() || !colNameMatcher.find()) {
             return input;
         }
         final String regex = regexMatcher.group(1);
@@ -43,7 +46,9 @@ public class FilterByDimension extends PTransform<PCollection<KV<Long, ElasticRo
                     final String string = row.getDimension(colName);
                     final Pattern pattern1 = Pattern.compile(regex);
                     final Matcher matcher1 = pattern1.matcher(string);
-                    return matcher1.find();
+                    final boolean find = matcher1.find();
+                    LOG.debug("string {}, colName {}, regex {}, matches {}", string, colName, regex, find);
+                    return find;
                 }));
     }
 }

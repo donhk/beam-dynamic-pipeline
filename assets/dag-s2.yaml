@@ -1,7 +1,7 @@
 # transform strings
 # id,first_name,last_name,email,gender,time,amount,match,memory
 user_transactions:
-  - FilterByDimension[first_name like '*.z.*']
+  - FilterByDimension[first_name like '.*z.*']
   - Upper[email]
   - SumColumnsKeep[match,amount,memory],correlation
   - SumColumnsKeep[match,memory],memory_match
@@ -11,7 +11,7 @@ user_transactions:
 # car_id,car_model,car_make,city,car_time,cost,promo
 car_info:
   - Upper['car_model']
-  - FilterByDimension[car_make like '*.z.*']
+  - FilterByDimension[car_make like '.*z.*']
 joins:
   - user_transactions[id] = car_info[car_id]
 post-join-transforms:
