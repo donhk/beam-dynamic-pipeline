@@ -36,7 +36,7 @@ public class ElasticRow implements Serializable, Cloneable {
 
     public String getDimension(String key) {
         if (!hasColumn(key)) {
-            throw new IllegalArgumentException(key);
+            throw new IllegalArgumentException("dimension not found [" + key + "]");
         }
         return (String) storage.get(key);
     }

@@ -8,6 +8,7 @@ import dev.donhk.stream.StreamUtils;
 import dev.donhk.stream.UserTxn2ElasticRow;
 import dev.donhk.transform.FilterByDimension;
 import dev.donhk.transform.PrintPCollection;
+import dev.donhk.transform.UpperDimension;
 import dev.donhk.utilities.RemoveColParser;
 import dev.donhk.utilities.SumColumnsKeepParser;
 import dev.donhk.utilities.Utils;
@@ -128,6 +129,9 @@ public class DAGOrchestrator {
         }
         if (transformation.startsWith("FilterByDimension")) {
             return elastic.apply(transformation, FilterByDimension.with(transformation));
+        }
+        if (transformation.startsWith("Upper")) {
+            return elastic.apply(transformation, UpperDimension.with(transformation));
         }
         return elastic;
     }

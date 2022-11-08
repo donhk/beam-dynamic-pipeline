@@ -10,7 +10,7 @@ user_transactions:
   - RemoveCol[SECOND_NAME]
 # car_id,car_model,car_make,city,car_time,cost,promo
 car_info:
-  - Upper['car_model']
+  - Upper[city]
   - FilterByDimension[car_make like '.*z.*']
 joins:
   - user_transactions[id] = car_info[car_id]
