@@ -69,7 +69,7 @@ public class StreamPipelineBuilder {
                             TypeDescriptors.longs(),
                             TypeDescriptor.of(ElasticRow.class)))
                     .via((SerializableFunction<KV<Long, UserTxn>, KV<Long, ElasticRow>>) input1 -> {
-                                final ElasticRow row = ElasticRow.of();
+                                final ElasticRow row = ElasticRow.create();
                                 final UserTxn txn = input1.getValue();
                                 row.addCol(ElasticRowCol.ID, txn.getId());
                                 row.addCol(ElasticRowCol.EMAIL, txn.getEmail());

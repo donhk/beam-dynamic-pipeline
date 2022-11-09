@@ -22,7 +22,7 @@ public class CarInfo2ElasticRow extends PTransform<PCollection<KV<Long, CarInfor
                         TypeDescriptors.longs(),
                         TypeDescriptor.of(ElasticRow.class)))
                 .via((SerializableFunction<KV<Long, CarInformation>, KV<Long, ElasticRow>>) input1 -> {
-                            final ElasticRow row = ElasticRow.of();
+                            final ElasticRow row = ElasticRow.create();
                             final CarInformation txn = input1.getValue();
                             row.addCol("ID", txn.getId());
                             row.addCol("CAR_TIME", txn.getCarTime());

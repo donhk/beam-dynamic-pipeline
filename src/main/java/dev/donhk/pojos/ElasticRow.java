@@ -10,7 +10,7 @@ public class ElasticRow implements Serializable, Cloneable {
 
     private Map<String, Object> storage;
 
-    public static ElasticRow of() {
+    public static ElasticRow create() {
         return new ElasticRow();
     }
 
@@ -32,6 +32,10 @@ public class ElasticRow implements Serializable, Cloneable {
 
     public boolean hasColumn(String key) {
         return storage.containsKey(key);
+    }
+
+    public void merge(ElasticRow row) {
+        storage.putAll(row.storage);
     }
 
     public String getDimension(String key) {

@@ -13,7 +13,7 @@ car_info:
   - Upper[city]
   - FilterByDimension[car_make like '.*z.*']
 joins:
-  - user_transactions[id] = car_info[car_id]
+  - user_transactions[id] inner join car_info[car_id]
 post-join-transforms:
   - SumColumnsKeep[cost,activity],activity_cost
   - RemoveCol[GENDER]

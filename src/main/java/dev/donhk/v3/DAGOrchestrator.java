@@ -25,8 +25,8 @@ public class DAGOrchestrator {
     private static final Logger LOG = LogManager.getLogger(DAGOrchestrator.class);
     private static final int _windowSize = 10;
     private static final int _elements = 20;
-    private static final String userTxn = "userTxn";
-    private static final String carInfo = "carInfo";
+    private static final String userTxn = "user_transactions";
+    private static final String carInfo = "car_info";
 
     public void execute() {
         // create the unbounded PCollection from TestStream
