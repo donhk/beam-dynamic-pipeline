@@ -58,6 +58,7 @@ public class Utils {
         newDag.setCarInfo((ArrayList<String>) obj.get("car_info"));
         newDag.setJoins((ArrayList<String>) obj.get("joins"));
         newDag.setOutputs((ArrayList<String>) obj.get("output"));
+        newDag.setPostJoinTransforms((ArrayList<String>) obj.get("post-join-transforms"));
         newDag.setName(input);
 
         return newDag;

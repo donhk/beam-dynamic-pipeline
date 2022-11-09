@@ -16,6 +16,6 @@ joins:
   - user_transactions[id] inner join car_info[car_id]
 post-join-transforms:
   - SumColumnsKeep[cost,activity],activity_cost
-  - RemoveCol[GENDER]
+  - RemoveCol[car_model]
 output:
   - some value

@@ -42,7 +42,6 @@ public class JoinWrapper {
         final String joinType = matcher1.group(2);
         final String[] rightType = matcher1.group(3).split("\\[");
         LOG.info("left: {}, join: {}, right: {}", leftPart, joinType, rightType);
-        LOG.info("left key {} right key {}", leftPart[0], rightType[0]);
         final PCollection<KV<Long, ElasticRow>> collection1 = dagDefinition.get(leftPart[0]);
         final PCollection<KV<Long, ElasticRow>> collection2 = dagDefinition.get(rightType[0]);
         final PCollection<KV<Long, KV<ElasticRow, ElasticRow>>> output;
@@ -61,7 +60,7 @@ public class JoinWrapper {
                 output.apply("flatten-outer",
                         MapElements.into(TypeDescriptors.kvs(TypeDescriptors.longs(), ElasticRowTypeDescriptor.of()))
                                 .via(RecordFlattener.of()));
-        final String key = dagDefinition.keySet().iterator().next();
+        final String key = "joined-sets";
         dagDefinition.clear();
         dagDefinition.put(key, finalOutput);
     }

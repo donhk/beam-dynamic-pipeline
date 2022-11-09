@@ -50,7 +50,7 @@ public class DAGOrchestrator {
         //next joins
         joins(dagDefinition, dagV3);
         //next post joins
-        //postJoins(dagDefinition, dagV3);
+        postJoins(dagDefinition, dagV3);
         //next outputs
         outputs(dagDefinition, dagV3);
 
