@@ -52,13 +52,26 @@ public class Utils {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+        final String userTxn = "user_transactions";
+        final String carInfo = "car_info";
+        final String joins = "joins";
+        final String postTransforms = "post-join-transforms";
         final DagV3 newDag = new DagV3();
-
-        newDag.setUserTransactions((ArrayList<String>) obj.get("user_transactions"));
-        newDag.setCarInfo((ArrayList<String>) obj.get("car_info"));
-        newDag.setJoins((ArrayList<String>) obj.get("joins"));
+        if (obj.containsKey(userTxn)) {
+            Map<String, List<String>> map = (Map<String, List<String>>) obj.get(userTxn);
+            newDag.setUserTransactions(map);
+        }
+        if (obj.containsKey(carInfo)) {
+            Map<String, List<String>> map = (Map<String, List<String>>) obj.get(carInfo);
+            newDag.setCarInfo(map);
+        }
+        if (obj.containsKey(joins)) {
+            newDag.setJoins((ArrayList<String>) obj.get(joins));
+        }
+        if (obj.containsKey(postTransforms)) {
+            newDag.setPostJoinTransforms((ArrayList<String>) obj.get(postTransforms));
+        }
         newDag.setOutputs((ArrayList<String>) obj.get("output"));
-        newDag.setPostJoinTransforms((ArrayList<String>) obj.get("post-join-transforms"));
         newDag.setName(input);
 
         return newDag;

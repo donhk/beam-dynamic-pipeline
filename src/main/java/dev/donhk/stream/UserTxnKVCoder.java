@@ -8,7 +8,7 @@ import java.io.*;
 import java.util.Collections;
 import java.util.List;
 
-public class UserTxnKVCoder extends Coder<KV<Long, UserTxn>> {
+public class UserTxnKVCoder extends Coder<KV<String, UserTxn>> {
 
     public static UserTxnKVCoder of() {
         return new UserTxnKVCoder();
@@ -18,7 +18,7 @@ public class UserTxnKVCoder extends Coder<KV<Long, UserTxn>> {
     }
 
     @Override
-    public void encode(KV<Long, UserTxn> value, OutputStream outStream) {
+    public void encode(KV<String, UserTxn> value, OutputStream outStream) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeObject(value);
@@ -32,11 +32,11 @@ public class UserTxnKVCoder extends Coder<KV<Long, UserTxn>> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public KV<Long, UserTxn> decode(InputStream inStream) {
+    public KV<String, UserTxn> decode(InputStream inStream) {
         try {
             ObjectInputStream ois = new ObjectInputStream(inStream);
             Object object = ois.readObject();
-            return (KV<Long, UserTxn>) object;
+            return (KV<String, UserTxn>) object;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

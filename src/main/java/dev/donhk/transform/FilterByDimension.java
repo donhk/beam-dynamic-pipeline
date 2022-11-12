@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FilterByDimension extends PTransform<PCollection<KV<Long, ElasticRow>>, PCollection<KV<Long, ElasticRow>>> {
+public class FilterByDimension extends PTransform<PCollection<KV<String, ElasticRow>>, PCollection<KV<String, ElasticRow>>> {
     private static final Logger LOG = LogManager.getLogger(FilterByDimension.class);
     private final String transform;
 
@@ -26,7 +26,7 @@ public class FilterByDimension extends PTransform<PCollection<KV<Long, ElasticRo
     }
 
     @Override
-    public PCollection<KV<Long, ElasticRow>> expand(PCollection<KV<Long, ElasticRow>> input) {
+    public PCollection<KV<String, ElasticRow>> expand(PCollection<KV<String, ElasticRow>> input) {
         // FilterByDimension[first_name like '*.o.*']
         final Pattern regexPattern = Pattern.compile(".*'(.*)'.*");
         final Pattern colNamePattern = Pattern.compile(".*\\[(.*)\\s+like.*]");
@@ -38,7 +38,7 @@ public class FilterByDimension extends PTransform<PCollection<KV<Long, ElasticRo
         final String regex = regexMatcher.group(1);
         final String colName = colNameMatcher.group(1).toUpperCase(Locale.ENGLISH);
         return input.apply(transform,
-                Filter.by((SerializableFunction<KV<Long, ElasticRow>, Boolean>) wrap -> {
+                Filter.by((SerializableFunction<KV<String, ElasticRow>, Boolean>) wrap -> {
                     final ElasticRow row = wrap.getValue();
                     if (!row.hasColumn(colName)) {
                         return false;

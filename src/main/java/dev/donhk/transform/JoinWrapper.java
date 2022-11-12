@@ -2,6 +2,7 @@ package dev.donhk.transform;
 
 import dev.donhk.descriptors.ElasticRowTypeDescriptor;
 import dev.donhk.pojos.ElasticRow;
+import dev.donhk.pojos.StreamKey;
 import org.apache.beam.sdk.extensions.joinlibrary.Join;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.SerializableFunction;
@@ -19,15 +20,15 @@ public class JoinWrapper {
 
     private static final Logger LOG = LogManager.getLogger(JoinWrapper.class);
     private final String join;
-    private final Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition;
+    private final Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition;
 
-    public JoinWrapper(String join, Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition) {
+    public JoinWrapper(String join, Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition) {
         this.join = join;
         this.dagDefinition = dagDefinition;
     }
 
     public static JoinWrapper wrapper(String join,
-                                      Map<String, PCollection<KV<Long, ElasticRow>>> dagDefinition) {
+                                      Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition) {
         return new JoinWrapper(join, dagDefinition);
     }
 
@@ -42,9 +43,14 @@ public class JoinWrapper {
         final String joinType = matcher1.group(2);
         final String[] rightType = matcher1.group(3).split("\\[");
         LOG.info("left: {}, join: {}, right: {}", leftPart, joinType, rightType);
-        final PCollection<KV<Long, ElasticRow>> collection1 = dagDefinition.get(leftPart[0]);
-        final PCollection<KV<Long, ElasticRow>> collection2 = dagDefinition.get(rightType[0]);
-        final PCollection<KV<Long, KV<ElasticRow, ElasticRow>>> output;
+
+        final PCollection<KV<String, ElasticRow>> collection1 = getKvpCollection(leftPart);
+        final PCollection<KV<String, ElasticRow>> collection2 = getKvpCollection(rightType);
+        if (collection1 == null || collection2 == null) {
+            throw new IllegalArgumentException("collection1 or collection2 is null");
+        }
+
+        final PCollection<KV<String, KV<ElasticRow, ElasticRow>>> output;
         if (joinType.contains("outer")) {
             output = Join.fullOuterJoin(
                     joinType,
@@ -56,26 +62,36 @@ public class JoinWrapper {
         } else {
             output = Join.innerJoin(joinType, collection1, collection2);
         }
-        PCollection<KV<Long, ElasticRow>> finalOutput =
+
+        PCollection<KV<String, ElasticRow>> finalOutput =
                 output.apply("flatten-outer",
-                        MapElements.into(TypeDescriptors.kvs(TypeDescriptors.longs(), ElasticRowTypeDescriptor.of()))
+                        MapElements.into(TypeDescriptors.kvs(TypeDescriptors.strings(), ElasticRowTypeDescriptor.of()))
                                 .via(RecordFlattener.of()));
-        final String key = "joined-sets";
+        final StreamKey key = new StreamKey("joined", "set");
         dagDefinition.clear();
         dagDefinition.put(key, finalOutput);
     }
 
+    private PCollection<KV<String, ElasticRow>> getKvpCollection(String[] parts) {
+        for (Map.Entry<StreamKey, PCollection<KV<String, ElasticRow>>> entry : dagDefinition.entrySet()) {
+            if (entry.getKey().getType().equalsIgnoreCase(parts[0])) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
     private static class RecordFlattener
             implements SerializableFunction<
-            KV<Long, KV<ElasticRow, ElasticRow>>,
-            KV<Long, ElasticRow>
+            KV<String, KV<ElasticRow, ElasticRow>>,
+            KV<String, ElasticRow>
             > {
         public static RecordFlattener of() {
             return new RecordFlattener();
         }
 
         @Override
-        public KV<Long, ElasticRow> apply(KV<Long, KV<ElasticRow, ElasticRow>> input) {
+        public KV<String, ElasticRow> apply(KV<String, KV<ElasticRow, ElasticRow>> input) {
             final ElasticRow eRow = ElasticRow.create();
             ElasticRow first = input.getValue().getKey();
             eRow.merge(first);

@@ -12,7 +12,7 @@ import org.apache.beam.sdk.values.TypeDescriptors;
 import java.util.List;
 
 public class SumColumnsKeep
-        extends PTransform<PCollection<KV<Long, ElasticRow>>, PCollection<KV<Long, ElasticRow>>> {
+        extends PTransform<PCollection<KV<String, ElasticRow>>, PCollection<KV<String, ElasticRow>>> {
 
     private final List<String> columns;
     private final String outputCol;
@@ -27,10 +27,10 @@ public class SumColumnsKeep
     }
 
     @Override
-    public PCollection<KV<Long, ElasticRow>> expand(PCollection<KV<Long, ElasticRow>> input) {
+    public PCollection<KV<String, ElasticRow>> expand(PCollection<KV<String, ElasticRow>> input) {
         return input.apply("sumColumnsKeep",
-                MapElements.into(TypeDescriptors.kvs(TypeDescriptors.longs(), TypeDescriptor.of(ElasticRow.class)))
-                        .via((SerializableFunction<KV<Long, ElasticRow>, KV<Long, ElasticRow>>) inRow -> {
+                MapElements.into(TypeDescriptors.kvs(TypeDescriptors.strings(), TypeDescriptor.of(ElasticRow.class)))
+                        .via((SerializableFunction<KV<String, ElasticRow>, KV<String, ElasticRow>>) inRow -> {
                             ElasticRow eRow = inRow.getValue().clone();
                             double newColumnValue = 0d;
                             for (String col : columns) {

@@ -9,7 +9,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.beam.sdk.values.TypeDescriptors;
 
-public class RemoveCol extends PTransform<PCollection<KV<Long, ElasticRow>>, PCollection<KV<Long, ElasticRow>>> {
+public class RemoveCol extends PTransform<PCollection<KV<String, ElasticRow>>, PCollection<KV<String, ElasticRow>>> {
 
     private final String colName;
 
@@ -22,10 +22,10 @@ public class RemoveCol extends PTransform<PCollection<KV<Long, ElasticRow>>, PCo
     }
 
     @Override
-    public PCollection<KV<Long, ElasticRow>> expand(PCollection<KV<Long, ElasticRow>> input) {
+    public PCollection<KV<String, ElasticRow>> expand(PCollection<KV<String, ElasticRow>> input) {
         return input.apply(
-                MapElements.into(TypeDescriptors.kvs(TypeDescriptors.longs(), TypeDescriptor.of(ElasticRow.class)))
-                        .via((SerializableFunction<KV<Long, ElasticRow>, KV<Long, ElasticRow>>) inRow -> {
+                MapElements.into(TypeDescriptors.kvs(TypeDescriptors.strings(), TypeDescriptor.of(ElasticRow.class)))
+                        .via((SerializableFunction<KV<String, ElasticRow>, KV<String, ElasticRow>>) inRow -> {
                             ElasticRow eRow = inRow.getValue().clone();
                             eRow.rmCol(colName);
                             return KV.of(inRow.getKey(), eRow);

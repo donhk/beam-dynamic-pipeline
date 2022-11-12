@@ -10,18 +10,18 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.beam.sdk.values.TypeDescriptors;
 
-public class CarInfo2ElasticRow extends PTransform<PCollection<KV<Long, CarInformation>>, PCollection<KV<Long, ElasticRow>>> {
+public class CarInfo2ElasticRow extends PTransform<PCollection<KV<String, CarInformation>>, PCollection<KV<String, ElasticRow>>> {
     public static CarInfo2ElasticRow of() {
         return new CarInfo2ElasticRow();
     }
 
     @Override
-    public PCollection<KV<Long, ElasticRow>> expand(PCollection<KV<Long, CarInformation>> input) {
+    public PCollection<KV<String, ElasticRow>> expand(PCollection<KV<String, CarInformation>> input) {
         //car_id,car_model,car_make,city,car_time,cost,promo
         return input.apply(MapElements.into(TypeDescriptors.kvs(
-                        TypeDescriptors.longs(),
+                        TypeDescriptors.strings(),
                         TypeDescriptor.of(ElasticRow.class)))
-                .via((SerializableFunction<KV<Long, CarInformation>, KV<Long, ElasticRow>>) input1 -> {
+                .via((SerializableFunction<KV<String, CarInformation>, KV<String, ElasticRow>>) input1 -> {
                             final ElasticRow row = ElasticRow.create();
                             final CarInformation txn = input1.getValue();
                             row.addCol("ID", txn.getId());

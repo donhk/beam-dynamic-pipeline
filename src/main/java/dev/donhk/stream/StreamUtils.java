@@ -22,59 +22,59 @@ import java.util.stream.Collectors;
 @SuppressWarnings("Duplicates")
 public class StreamUtils {
 
-    public static PCollection<KV<Long, CarInformation>> carInfoWindowData(Pipeline pipeline, int _elements, int _windowSize) {
+    public static PCollection<KV<String, CarInformation>> carInfoWindowData(Pipeline pipeline, int _elements, int _windowSize) {
         final List<CarInformation> txn = Utils.getCarInfoList().subList(0, _elements);
-        final List<TimestampedValue<KV<Long, CarInformation>>> timestamped = txn.stream().map(i -> {
-            final KV<Long, CarInformation> kv = KV.of(i.getId(), i);
+        final List<TimestampedValue<KV<String, CarInformation>>> timestamped = txn.stream().map(i -> {
+            final KV<String, CarInformation> kv = KV.of(String.valueOf(i.getId()), i);
             final LocalDateTime time = i.getCarTime();
             final long millis = time.toInstant(ZoneOffset.UTC).toEpochMilli();
             final Instant instant = new Instant(millis);
             return TimestampedValue.of(kv, instant);
         }).collect(Collectors.toList());
 
-        TestStream.Builder<KV<Long, CarInformation>> streamBuilder =
+        TestStream.Builder<KV<String, CarInformation>> streamBuilder =
                 TestStream.create(CarInfoKVCoder.of());
-        for (TimestampedValue<KV<Long, CarInformation>> value : timestamped) {
+        for (TimestampedValue<KV<String, CarInformation>> value : timestamped) {
             streamBuilder = streamBuilder.addElements(value);
         }
 
         return pipeline.apply(streamBuilder.advanceWatermarkToInfinity())
-                .apply("car-info-window", Window.<KV<Long, CarInformation>>into(new GlobalWindows())
+                .apply("car-info-window", Window.<KV<String, CarInformation>>into(new GlobalWindows())
                         .triggering(Repeatedly.forever(
                                 AfterPane.elementCountAtLeast(_windowSize))
                         ).discardingFiredPanes()
                         .withOnTimeBehavior(Window.OnTimeBehavior.FIRE_IF_NON_EMPTY));
     }
 
-    public static PCollection<KV<Long, UserTxn>> userTxnWindowData(Pipeline pipeline, int _elements, int _windowSize) {
-        final PCollection<KV<Long, UserTxn>> input = initializePCollection(pipeline, _elements);
-        return input.apply("user-txn-window", Window.<KV<Long, UserTxn>>into(new GlobalWindows())
+    public static PCollection<KV<String, UserTxn>> userTxnWindowData(Pipeline pipeline, int _elements, int _windowSize) {
+        final PCollection<KV<String, UserTxn>> input = initializePCollection(pipeline, _elements);
+        return input.apply("user-txn-window", Window.<KV<String, UserTxn>>into(new GlobalWindows())
                 .triggering(Repeatedly.forever(
                         AfterPane.elementCountAtLeast(_windowSize))
                 ).discardingFiredPanes()
                 .withOnTimeBehavior(Window.OnTimeBehavior.FIRE_IF_NON_EMPTY));
     }
 
-    private static TestStream.Builder<KV<Long, UserTxn>> createTestStream(List<TimestampedValue<KV<Long, UserTxn>>> timestamped) {
-        TestStream.Builder<KV<Long, UserTxn>>
+    private static TestStream.Builder<KV<String, UserTxn>> createTestStream(List<TimestampedValue<KV<String, UserTxn>>> timestamped) {
+        TestStream.Builder<KV<String, UserTxn>>
                 streamBuilder = TestStream.create(UserTxnKVCoder.of());
-        for (TimestampedValue<KV<Long, UserTxn>> value : timestamped) {
+        for (TimestampedValue<KV<String, UserTxn>> value : timestamped) {
             streamBuilder = streamBuilder.addElements(value);
         }
         return streamBuilder;
     }
 
-    private static PCollection<KV<Long, UserTxn>> initializePCollection(Pipeline pipeline, int _elements) {
+    private static PCollection<KV<String, UserTxn>> initializePCollection(Pipeline pipeline, int _elements) {
         final List<UserTxn> txn = Utils.getUserTxnList().subList(0, _elements);
-        final List<TimestampedValue<KV<Long, UserTxn>>> timestamped
+        final List<TimestampedValue<KV<String, UserTxn>>> timestamped
                 = createTimeStampedList(txn);
-        final TestStream.Builder<KV<Long, UserTxn>> streamBuilder = createTestStream(timestamped);
+        final TestStream.Builder<KV<String, UserTxn>> streamBuilder = createTestStream(timestamped);
         return pipeline.apply(streamBuilder.advanceWatermarkToInfinity());
     }
 
-    private static List<TimestampedValue<KV<Long, UserTxn>>> createTimeStampedList(List<UserTxn> txn) {
+    private static List<TimestampedValue<KV<String, UserTxn>>> createTimeStampedList(List<UserTxn> txn) {
         return txn.stream().map(i -> {
-            final KV<Long, UserTxn> kv = KV.of(i.getId(), i);
+            final KV<String, UserTxn> kv = KV.of(String.valueOf(i.getId()), i);
             final LocalDateTime time = i.getTime();
             final long millis = time.toInstant(ZoneOffset.UTC).toEpochMilli();
             final Instant instant = new Instant(millis);

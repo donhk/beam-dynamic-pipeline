@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class UpperDimension extends PTransform<PCollection<KV<Long, ElasticRow>>, PCollection<KV<Long, ElasticRow>>> {
+public class UpperDimension extends PTransform<PCollection<KV<String, ElasticRow>>, PCollection<KV<String, ElasticRow>>> {
     private static final Logger LOG = LogManager.getLogger(UpperDimension.class);
     private final String transform;
 
@@ -26,7 +26,7 @@ public class UpperDimension extends PTransform<PCollection<KV<Long, ElasticRow>>
     }
 
     @Override
-    public PCollection<KV<Long, ElasticRow>> expand(PCollection<KV<Long, ElasticRow>> input) {
+    public PCollection<KV<String, ElasticRow>> expand(PCollection<KV<String, ElasticRow>> input) {
         //Upper[car_model]
         Pattern pattern = Pattern.compile(".*\\[(.*)].*");
         Matcher matcher = pattern.matcher(transform);
@@ -39,7 +39,7 @@ public class UpperDimension extends PTransform<PCollection<KV<Long, ElasticRow>>
     }
 
     @SuppressWarnings("unused")
-    private static class Upper extends DoFn<KV<Long, ElasticRow>, KV<Long, ElasticRow>> {
+    private static class Upper extends DoFn<KV<String, ElasticRow>, KV<String, ElasticRow>> {
         private final String colName;
 
         private Upper(String colName) {
@@ -47,7 +47,7 @@ public class UpperDimension extends PTransform<PCollection<KV<Long, ElasticRow>>
         }
 
         @ProcessElement
-        public void process(@Element KV<Long, ElasticRow> elem, OutputReceiver<KV<Long, ElasticRow>> out) {
+        public void process(@Element KV<String, ElasticRow> elem, OutputReceiver<KV<String, ElasticRow>> out) {
             ElasticRow row = elem.getValue().clone();
             String upper = row.getDimension(colName).toUpperCase(Locale.ENGLISH);
             row.addCol(colName, upper);

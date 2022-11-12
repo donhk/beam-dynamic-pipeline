@@ -3,11 +3,12 @@ package dev.donhk.pojos;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class DagV3 implements Serializable {
     private String name;
-    private List<String> userTransactions = Collections.emptyList();
-    private List<String> carInfo = Collections.emptyList();
+    private Map<String, List<String>> userTransactions = Collections.emptyMap();
+    private Map<String, List<String>> carInfo = Collections.emptyMap();
     private List<String> joins = Collections.emptyList();
     private List<String> postJoinTransforms = Collections.emptyList();
     private List<String> outputs = Collections.emptyList();
@@ -23,19 +24,19 @@ public class DagV3 implements Serializable {
         this.name = name;
     }
 
-    public List<String> getUserTransactions() {
+    public Map<String, List<String>> getUserTransactions() {
         return userTransactions;
     }
 
-    public void setUserTransactions(List<String> userTransactions) {
+    public void setUserTransactions(Map<String, List<String>> userTransactions) {
         this.userTransactions = userTransactions;
     }
 
-    public List<String> getCarInfo() {
+    public Map<String, List<String>> getCarInfo() {
         return carInfo;
     }
 
-    public void setCarInfo(List<String> carInfo) {
+    public void setCarInfo(Map<String, List<String>> carInfo) {
         this.carInfo = carInfo;
     }
 

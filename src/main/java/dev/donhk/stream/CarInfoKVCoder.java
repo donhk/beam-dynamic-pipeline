@@ -8,7 +8,7 @@ import java.io.*;
 import java.util.Collections;
 import java.util.List;
 
-public class CarInfoKVCoder extends Coder<KV<Long, CarInformation>> {
+public class CarInfoKVCoder extends Coder<KV<String, CarInformation>> {
 
     public static CarInfoKVCoder of() {
         return new CarInfoKVCoder();
@@ -18,7 +18,7 @@ public class CarInfoKVCoder extends Coder<KV<Long, CarInformation>> {
     }
 
     @Override
-    public void encode(KV<Long, CarInformation> value, OutputStream outStream) {
+    public void encode(KV<String, CarInformation> value, OutputStream outStream) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeObject(value);
@@ -32,11 +32,11 @@ public class CarInfoKVCoder extends Coder<KV<Long, CarInformation>> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public KV<Long, CarInformation> decode(InputStream inStream) {
+    public KV<String, CarInformation> decode(InputStream inStream) {
         try {
             ObjectInputStream ois = new ObjectInputStream(inStream);
             Object object = ois.readObject();
-            return (KV<Long, CarInformation>) object;
+            return (KV<String, CarInformation>) object;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

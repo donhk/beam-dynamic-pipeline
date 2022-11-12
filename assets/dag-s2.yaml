@@ -1,21 +1,23 @@
 # transform strings
 # id,first_name,last_name,email,gender,time,amount,match,memory
 user_transactions:
-  - FilterByDimension[first_name like '.*z.*']
-  - Upper[email]
-  - SumColumnsKeep[match,amount,memory],correlation
-  - SumColumnsKeep[match,memory],memory_match
-  - SumColumnsKeep[memory_match,correlation],activity
-  - RemoveCol[GENDER]
-  - RemoveCol[SECOND_NAME]
+  stream1:
+      - FilterByDimension[first_name like '.*z.*']
+      - Upper[email]
+      - SumColumnsKeep[match,amount,memory],correlation
+      - SumColumnsKeep[match,memory],memory_match
+      - SumColumnsKeep[memory_match,correlation],activity
+      - RemoveCol[GENDER]
+      - RemoveCol[SECOND_NAME]
 # car_id,car_model,car_make,city,car_time,cost,promo
 car_info:
-  - Upper[city]
-  - FilterByDimension[car_make like '.*z.*']
+  stream1:
+    - Upper[city]
+    - FilterByDimension[car_make like '.*z.*']
 joins:
   - user_transactions[id] inner join car_info[car_id]
 post-join-transforms:
   - SumColumnsKeep[cost,activity],activity_cost
   - RemoveCol[car_model]
 output:
-  - some value
+  - PrintOutput
