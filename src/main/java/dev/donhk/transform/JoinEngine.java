@@ -16,20 +16,20 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JoinWrapper {
+public class JoinEngine {
 
-    private static final Logger LOG = LogManager.getLogger(JoinWrapper.class);
+    private static final Logger LOG = LogManager.getLogger(JoinEngine.class);
     private final String join;
     private final Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition;
 
-    public JoinWrapper(String join, Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition) {
+    public JoinEngine(String join, Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition) {
         this.join = join;
         this.dagDefinition = dagDefinition;
     }
 
-    public static JoinWrapper wrapper(String join,
-                                      Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition) {
-        return new JoinWrapper(join, dagDefinition);
+    public static JoinEngine wrapper(String join,
+                                     Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition) {
+        return new JoinEngine(join, dagDefinition);
     }
 
     public void execute() {
@@ -67,18 +67,28 @@ public class JoinWrapper {
                 output.apply("flatten-outer",
                         MapElements.into(TypeDescriptors.kvs(TypeDescriptors.strings(), ElasticRowTypeDescriptor.of()))
                                 .via(RecordFlattener.of()));
-        final StreamKey key = new StreamKey("joined", "set");
+        final StreamKey key = new StreamKey(join, "joined");
+        finalOutput.apply(PrintPCollection.with("partial-join"));
         dagDefinition.clear();
         dagDefinition.put(key, finalOutput);
     }
 
     private PCollection<KV<String, ElasticRow>> getKvpCollection(String[] parts) {
+        final String joinParts = String.join(",", parts);
+        LOG.debug("PARTS {}", String.join(",", parts));
         for (Map.Entry<StreamKey, PCollection<KV<String, ElasticRow>>> entry : dagDefinition.entrySet()) {
-            if (entry.getKey().getType().equalsIgnoreCase(parts[0])) {
+            final StreamKey streamKey = entry.getKey();
+            final String type = parts[0];
+            final String streamAndKeyCol = parts[1];
+            final String stream = streamAndKeyCol.substring(0, streamAndKeyCol.indexOf("."));
+            final boolean typeMatch = streamKey.getType().equalsIgnoreCase(type);
+            final boolean streamMatch = streamKey.getName().equalsIgnoreCase(stream);
+            LOG.debug("type {} stream {} | {}", type, stream, streamKey.toString());
+            if (typeMatch && streamMatch) {
                 return entry.getValue();
             }
         }
-        return null;
+        throw new IllegalStateException("No stream found as " + joinParts + " within dag definition, typo?");
     }
 
     private static class RecordFlattener

@@ -7,17 +7,32 @@ user_transactions:
       - SumColumnsKeep[match,amount,memory],correlation
       - SumColumnsKeep[match,memory],memory_match
       - SumColumnsKeep[memory_match,correlation],activity
-      - RemoveCol[GENDER]
-      - RemoveCol[SECOND_NAME]
+      - RemoveCol[gender]
+      - RemoveCol[last_name]
+  stream2:
+      - FilterByDimension[first_name like '.*z.*']
+      - RemoveCol[gender]
+      - RemoveCol[first_name]
+      - RemoveCol[last_name]
+      - RemoveCol[memory]
+      - RemoveCol[match]
+      - RemoveCol[time]
+      - Upper[email]
+      - RenameCol[id,stream2_id]
+      - RenameCol[email,stream2_email]
+      - RenameCol[amount,stream2_amount]
 # car_id,car_model,car_make,city,car_time,cost,promo
 car_info:
   stream1:
     - Upper[city]
     - FilterByDimension[car_make like '.*z.*']
 joins:
-  - user_transactions[id] inner join car_info[car_id]
+  - user_transactions[stream1.id] inner join car_info[stream1.car_id]
+  - user_transactions[stream1.id] inner join user_transactions[stream2.stream2_id]
 post-join-transforms:
   - SumColumnsKeep[cost,activity],activity_cost
+# {ACTIVITY, CAR_MAKE, CAR_TIME, CITY, CORRELATION, COST, EMAIL, FIRST_NAME, ID, MATCH, MEMORY, MEMORY_MATCH, MODEL, PROMO, SECOND_NAME, TIME, ACTIVITY_COST}
+  - SumColumnsKeep[amount,stream2_amount],amount_x2
   - RemoveCol[car_model]
 output:
   - PrintOutput

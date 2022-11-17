@@ -45,6 +45,10 @@ public class ElasticRow implements Serializable, Cloneable {
         return (String) storage.get(key);
     }
 
+    public Object getObject(String key) {
+        return storage.get(key);
+    }
+
     public double getScalarCol(String key) {
         if (!storage.containsKey(key)) {
             throw new IllegalArgumentException("no " + key + " in " + storage);
