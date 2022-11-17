@@ -64,11 +64,7 @@ public class DAGOrchestrator {
         if (dagV3.getJoins().isEmpty()) {
             return;
         }
-        int i = 0;
-        for (String join : dagV3.getJoins()) {
-            LOG.info("join-{} as {}", i++, join);
-            JoinEngine.wrapper(join, dagDefinition).execute();
-        }
+        JoinEngine.wrapper(dagV3, dagDefinition).execute();
     }
 
     private void postJoins(Map<StreamKey, PCollection<KV<String, ElasticRow>>> dagDefinition, DagV3 dagV3) {
